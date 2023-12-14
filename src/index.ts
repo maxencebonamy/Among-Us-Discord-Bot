@@ -1,11 +1,8 @@
-import { Client } from "discord.js"
+import { ActivityType, Client, type ChatInputCommandInteraction } from "discord.js"
 import { deployCommands } from "./deploy-commands"
 import { commands } from "./commands"
-import { config } from "./config"
-
-const client = new Client({
-	intents: ["Guilds", "GuildMessages", "DirectMessages"]
-})
+import { config } from "@/config"
+import { client } from "./lib/client"
 
 client.once("ready", async() => {
 	console.log("Discord bot is ready! 🤖")
@@ -17,10 +14,14 @@ client.on("interactionCreate", async(interaction) => {
 		return
 	}
 	const { commandName } = interaction
-	if (commands[commandName]) {
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
-		await commands[commandName].execute(interaction)
+	const command = commands[commandName as keyof typeof commands]
+	if (command) {
+		await command.execute(interaction as ChatInputCommandInteraction)
 	}
 })
 
-void client.login(config.DISCORD_TOKEN)
+void client.login(config.DISCORD_TOKEN).then(() => {
+	console.log("Discord bot is logged in! ✅")
+	if (!client.user) return
+	client.user.setPresence({ activities: [{ name: "Among Us", type: ActivityType.Playing }], status: "dnd" })
+})

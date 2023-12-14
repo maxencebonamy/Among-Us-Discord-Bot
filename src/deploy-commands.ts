@@ -6,7 +6,7 @@ const commandsData = Object.values(commands).map((command) => command.data)
 
 const rest = new REST({ version: "10" }).setToken(config.DISCORD_TOKEN)
 
-export async function deployCommands({ guildId }): Promise<void> {
+export async function deployCommands({ guildId }: { guildId: string }): Promise<void> {
 	try {
 		console.log("Started refreshing application (/) commands.")
 
