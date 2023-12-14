@@ -1,0 +1,17 @@
+name: Docker build and start Node.js app
+
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Build Docker image
+      run: docker build -t my-node-app .
+
+    - name: Run Docker container
+      run: docker run -d -p 8080:8080 my-node-app
