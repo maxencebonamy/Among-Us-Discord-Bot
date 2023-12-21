@@ -1,5 +1,4 @@
-import type { Guild } from "discord.js"
-import { Client } from "discord.js"
+import { Client, type Guild } from "discord.js"
 import { config } from "@/config"
 
 declare global {

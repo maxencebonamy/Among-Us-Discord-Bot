@@ -1,0 +1,113 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+    provider = "prisma-client-js"
+}
+
+datasource db {
+    provider = "postgresql"
+    url      = env("DATABASE_URL")
+}
+
+model Config {
+    id        Int      @id @default(autoincrement())
+    key       String   @unique
+    value     String?
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+}
+
+enum UserType {
+    ADMIN
+    MODO
+    PLAYER
+}
+
+enum PlayerRole {
+    CREWMATE
+    IMPOSTOR
+}
+
+enum TaskLevel {
+    EASY
+    MEDIUM
+    HARD
+}
+
+model User {
+    id Int @id @default(autoincrement())
+
+    discordId String   @unique
+    name      String   @unique
+    type      UserType
+    player    Player?
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+}
+
+model Game {
+    id Int @id @default(autoincrement())
+
+    players PlayerOnGame[]
+    tasks   TaskOnPlayer[]
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+}
+
+model Player {
+    id Int @id @default(autoincrement())
+
+    user  User           @relation(fields: [userId], references: [id])
+    alive Boolean        @default(true)
+    role  PlayerRole
+    games PlayerOnGame[]
+    tasks TaskOnPlayer[]
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    userId Int @unique
+}
+
+model PlayerOnGame {
+    id Int @id @default(autoincrement())
+
+    game   Game   @relation(fields: [gameId], references: [id])
+    player Player @relation(fields: [playerId], references: [id])
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    gameId   Int
+    playerId Int
+}
+
+model Task {
+    id Int @id @default(autoincrement())
+
+    name    String         @unique
+    level   TaskLevel
+    players TaskOnPlayer[]
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+}
+
+model TaskOnPlayer {
+    id Int @id @default(autoincrement())
+
+    player    Player  @relation(fields: [playerId], references: [id])
+    task      Task    @relation(fields: [taskId], references: [id])
+    game      Game    @relation(fields: [gameId], references: [id])
+    completed Boolean @default(false)
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    playerId Int
+    taskId   Int
+    gameId   Int
+}

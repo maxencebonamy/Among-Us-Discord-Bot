@@ -1,8 +1,8 @@
-import { ActivityType, Client, type ChatInputCommandInteraction } from "discord.js"
-import { deployCommands } from "./deploy-commands"
-import { commands } from "./commands"
+import { ActivityType, type ChatInputCommandInteraction } from "discord.js"
+import { deployCommands } from "@/lib/deploy-commands"
+import { commands } from "@/commands"
 import { config } from "@/config"
-import { client } from "./lib/client"
+import { client } from "@/lib/client"
 
 client.once("ready", async() => {
 	console.log("Discord bot is ready! 🤖")
