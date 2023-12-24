@@ -1,2 +1,2 @@
-export type { ConfigAddProps, ConfigEditProps, ConfigGetProps, ConfigExistsProps } from "./config.type"
+export type { ConfigGetterArgs, ConfigSetterArgs } from "./config.type"
 export { Config } from "./config"

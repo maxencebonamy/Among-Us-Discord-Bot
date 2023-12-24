@@ -1,9 +1,9 @@
 import { db } from "@/lib/db"
-import type { ConfigAddProps, ConfigEditProps, ConfigGetProps, ConfigExistsProps } from "."
+import type { ConfigGetterArgs, ConfigSetterArgs } from "./config.type"
 
 export class Config {
 
-	static async add({ key, value }: ConfigAddProps): Promise<void> {
+	static async add({ key, value }: ConfigSetterArgs): Promise<void> {
 		if (await Config.exists({ key })) return
 
 		await db.config.create({
@@ -14,7 +14,7 @@ export class Config {
 		})
 	}
 
-	static async get({ key }: ConfigGetProps): Promise<string | null> {
+	static async get({ key }: ConfigGetterArgs): Promise<string | null> {
 		const config = await db.config.findFirst({
 			where: {
 				key
@@ -24,7 +24,29 @@ export class Config {
 		return config?.value ?? null
 	}
 
-	static async edit({ key, value }: ConfigEditProps): Promise<void> {
+	static async getAll(): Promise<Record<string, string>> {
+		const config = await db.config.findMany({
+			select: {
+				key: true,
+				value: true
+			}
+		})
+
+		const output: Record<string, string> = {}
+		Object.entries(config).forEach(([_, value]) => {
+			if (value.value === null) return
+			output[value.key] = value.value
+		})
+
+		return output
+	}
+
+	static async set({ key, value }: ConfigSetterArgs): Promise<void> {
+		if (!await Config.exists({ key })) {
+			await Config.add({ key, value })
+			return
+		}
+
 		await db.config.update({
 			where: {
 				key
@@ -35,7 +57,15 @@ export class Config {
 		})
 	}
 
-	static async exists({ key }: ConfigExistsProps): Promise<boolean> {
+	static async delete({ key }: ConfigGetterArgs): Promise<void> {
+		await db.config.delete({
+			where: {
+				key
+			}
+		})
+	}
+
+	static async exists({ key }: ConfigGetterArgs): Promise<boolean> {
 		return !!(await Config.get({ key }))
 	}
 

@@ -1,17 +1,8 @@
-export type ConfigAddProps = {
+export type ConfigGetterArgs = {
+    key: string
+}
+
+export type ConfigSetterArgs = {
     key: string
     value: string
-}
-
-export type ConfigEditProps = {
-    key: string
-    value: string
-}
-
-export type ConfigGetProps = {
-    key: string
-}
-
-export type ConfigExistsProps = {
-    key: string
 }
