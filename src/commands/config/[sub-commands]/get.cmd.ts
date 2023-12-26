@@ -1,5 +1,5 @@
 import { Config } from "@/models/config"
-import { simpleEmbed } from "@/utils/discord/embed"
+import { createErrorEmbed, createSuccessEmbed } from "@/utils/discord/components/embed"
 import { isAdmin } from "@/utils/discord/roles"
 import type { CommandExecute } from "@/utils/handler/command"
 
@@ -17,17 +17,9 @@ export const execute: CommandExecute = async(command) => {
 	try {
 		value = await Config.get({ key })
 		if (value === null) throw new Error("La valeur est nulle.")
-		embed = simpleEmbed(
-			`La valeur de configuration "${key}" est égale à "${value}".`,
-			"normal",
-			"✅ Valeur récupérée avec succès"
-		)
+		embed = createSuccessEmbed({ content: `La valeur de configuration "${key}" est égale à "${value}".` })
 	} catch (error) {
-		embed = simpleEmbed(
-			`Une erreur est survenue lors de la récupération de la valeur de configuration "${key}".`,
-			"error",
-			"❌ Erreur lors de la récupération de la valeur"
-		)
+		embed = createErrorEmbed({ content: `Une erreur est survenue lors de la récupération de la valeur de configuration "${key}".` })
 	}
 
 	await command.reply({ embeds: [embed], ephemeral: true })

@@ -1,5 +1,5 @@
 import { Config } from "@/models/config"
-import { simpleEmbed } from "@/utils/discord/embed"
+import { createSuccessEmbed } from "@/utils/discord/components/embed"
 import { isAdmin } from "@/utils/discord/roles"
 import type { CommandExecute } from "@/utils/handler/command"
 
@@ -13,11 +13,7 @@ export const execute: CommandExecute = async(command) => {
 
 	const configString = JSON.stringify(config, null, 4)
 
-	const embed = simpleEmbed(
-		`Voici toutes les valeurs de configuration :\n\`\`\`json\n${configString}\`\`\``,
-		"normal",
-		"✅ Valeurs récupérées avec succès"
-	)
+	const embed = createSuccessEmbed({ content: `Voici toutes les valeurs de configuration :\n\`\`\`json\n${configString}\`\`\`` })
 
 	await command.reply({ embeds: [embed], ephemeral: true })
 }

@@ -35,6 +35,12 @@ enum TaskLevel {
     HARD
 }
 
+enum GameStatus {
+    WAITING
+    STARTED
+    FINISHED
+}
+
 model User {
     id Int @id @default(autoincrement())
 
@@ -52,6 +58,7 @@ model Game {
 
     players PlayerOnGame[]
     tasks   TaskOnPlayer[]
+    status  GameStatus
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
@@ -61,10 +68,7 @@ model Player {
     id Int @id @default(autoincrement())
 
     user  User           @relation(fields: [userId], references: [id])
-    alive Boolean        @default(true)
-    role  PlayerRole
     games PlayerOnGame[]
-    tasks TaskOnPlayer[]
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
@@ -75,8 +79,11 @@ model Player {
 model PlayerOnGame {
     id Int @id @default(autoincrement())
 
-    game   Game   @relation(fields: [gameId], references: [id])
-    player Player @relation(fields: [playerId], references: [id])
+    game   Game           @relation(fields: [gameId], references: [id])
+    player Player         @relation(fields: [playerId], references: [id])
+    alive  Boolean        @default(true)
+    role   PlayerRole
+    tasks  TaskOnPlayer[]
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
@@ -88,9 +95,9 @@ model PlayerOnGame {
 model Task {
     id Int @id @default(autoincrement())
 
-    name    String         @unique
-    level   TaskLevel
-    players TaskOnPlayer[]
+    name   String         @unique
+    level  TaskLevel
+    player TaskOnPlayer[]
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
@@ -99,15 +106,15 @@ model Task {
 model TaskOnPlayer {
     id Int @id @default(autoincrement())
 
-    player    Player  @relation(fields: [playerId], references: [id])
-    task      Task    @relation(fields: [taskId], references: [id])
-    game      Game    @relation(fields: [gameId], references: [id])
-    completed Boolean @default(false)
+    player    PlayerOnGame @relation(fields: [playerOnGameId], references: [id])
+    task      Task         @relation(fields: [taskId], references: [id])
+    game      Game         @relation(fields: [gameId], references: [id])
+    completed Boolean      @default(false)
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 
-    playerId Int
-    taskId   Int
-    gameId   Int
+    playerOnGameId Int
+    taskId         Int
+    gameId         Int
 }

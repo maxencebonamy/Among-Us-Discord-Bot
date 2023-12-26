@@ -56,7 +56,7 @@ client.on("ready", async client => {
 	client.user.setPresence({
 		status: "online",
 		activities: [{
-			name: "Among us",
+			name: "Among Us",
 			type: ActivityType.Playing
 		}]
 	})

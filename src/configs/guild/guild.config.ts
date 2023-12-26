@@ -6,6 +6,11 @@ export const guilds: Record<GuildType, Guild> = {
 		channels: {
 
 		},
-		roles: {}
+		roles: {
+			"player": "1162833038317723719",
+			"modo": "1162833091979644980",
+			"admin": "1162833152151138530",
+			"dev": "1162833388286267564"
+		}
 	}
 }
