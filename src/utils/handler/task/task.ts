@@ -13,6 +13,7 @@ export const load = async(tasksFolder: string): Promise<number> => {
 	let tasksLoaded = 0
 
 	for (const folder of folders) {
+		if (folder === ".gitkeep") continue
 		const path = `${tasksFolder}${sep}${folder}${sep}`
 
 		if (!statSync(path).isDirectory()) continue

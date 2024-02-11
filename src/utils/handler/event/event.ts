@@ -13,6 +13,7 @@ export const load = async(client: Client, eventsFolder: string): Promise<number>
 	let eventsLoaded = 0
 
 	for (const folder of folders) {
+		if (folder === ".gitkeep") continue
 		const path = `${eventsFolder}${sep}${folder}${sep}`
 
 		if (!statSync(path).isDirectory()) continue

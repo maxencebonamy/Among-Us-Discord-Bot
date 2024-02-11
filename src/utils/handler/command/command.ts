@@ -28,6 +28,7 @@ export const load = async(commandsFolder: string): Promise<LoadedCommands> => {
 
 	// Browse folders in `commandsFolder`
 	for (const folder of folders) {
+		if (folder === ".gitkeep") continue
 		const path = `${commandsFolder}${sep}${folder}${sep}`
 
 		if (!statSync(path).isDirectory()) {
