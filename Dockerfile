@@ -13,6 +13,7 @@ RUN npm install
 # Run migrations:
 COPY prisma ./prisma/
 RUN npx prisma generate
+RUN npm run migrate dev
 
 # Copy all files:
 COPY . .
