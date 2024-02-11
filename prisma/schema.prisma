@@ -10,20 +10,6 @@ datasource db {
     url      = env("DATABASE_URL")
 }
 
-model Config {
-    id        Int      @id @default(autoincrement())
-    key       String   @unique
-    value     String?
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
-}
-
-enum UserType {
-    ADMIN
-    MODO
-    PLAYER
-}
-
 enum PlayerRole {
     CREWMATE
     IMPOSTOR
@@ -41,80 +27,100 @@ enum GameStatus {
     FINISHED
 }
 
-model User {
-    id Int @id @default(autoincrement())
-
-    discordId String   @unique
-    name      String   @unique
-    type      UserType
-    player    Player?
+model Config {
+    key   String  @id
+    value String?
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 }
 
 model Game {
-    id Int @id @default(autoincrement())
-
-    players PlayerOnGame[]
-    tasks   TaskOnPlayer[]
-    status  GameStatus
+    id      Int        @id @default(autoincrement())
+    status  GameStatus @default(WAITING)
+    tasks   Task[]
+    players Player[]
+    modos   Modo[]
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
+}
+
+model User {
+    id        Int    @id @default(autoincrement())
+    discordId String @unique
+    name      String
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    player Player[]
+    modo   Modo[]
 }
 
 model Player {
-    id Int @id @default(autoincrement())
-
-    user  User           @relation(fields: [userId], references: [id])
-    games PlayerOnGame[]
+    user  User       @relation(fields: [userId], references: [id])
+    role  PlayerRole
+    alive Boolean    @default(true)
+    game  Game       @relation(fields: [gameId], references: [id])
+    tasks Task[]
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 
-    userId Int @unique
+    userId Int @id
+    gameId Int
 }
 
-model PlayerOnGame {
-    id Int @id @default(autoincrement())
-
-    game   Game           @relation(fields: [gameId], references: [id])
-    player Player         @relation(fields: [playerId], references: [id])
-    alive  Boolean        @default(true)
-    role   PlayerRole
-    tasks  TaskOnPlayer[]
+model Modo {
+    user  User    @relation(fields: [userId], references: [id])
+    admin Boolean @default(false)
+    game  Game    @relation(fields: [gameId], references: [id])
+    tasks Task[]
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 
-    gameId   Int
-    playerId Int
+    userId Int @id
+    gameId Int
 }
 
 model Task {
-    id Int @id @default(autoincrement())
+    id       Int      @id @default(autoincrement())
+    done     Boolean  @default(false)
+    game     Game     @relation(fields: [gameId], references: [id])
+    player   Player   @relation(fields: [playerId], references: [userId])
+    modo     Modo     @relation(fields: [modoId], references: [userId])
+    taskType TaskType @relation(fields: [taskTypeId], references: [id])
 
-    name   String         @unique
-    level  TaskLevel
-    player TaskOnPlayer[]
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    gameId     Int
+    playerId   Int
+    modoId     Int
+    taskTypeId Int
+}
+
+model Room {
+    id        Int        @id @default(autoincrement())
+    name      String
+    taskTypes TaskType[]
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 }
 
-model TaskOnPlayer {
-    id Int @id @default(autoincrement())
-
-    player    PlayerOnGame @relation(fields: [playerOnGameId], references: [id])
-    task      Task         @relation(fields: [taskId], references: [id])
-    game      Game         @relation(fields: [gameId], references: [id])
-    completed Boolean      @default(false)
+model TaskType {
+    id          Int       @id @default(autoincrement())
+    name        String
+    description String?
+    level       TaskLevel
+    room        Room      @relation(fields: [roomId], references: [id])
+    tasks       Task[]
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 
-    playerOnGameId Int
-    taskId         Int
-    gameId         Int
+    roomId Int
 }
