@@ -16,6 +16,6 @@ RUN npx prisma generate
 
 # Copy all files:
 COPY . .
-RUN npx prisma migrate dev
+RUN npx prisma db push
 
 CMD npm run start
