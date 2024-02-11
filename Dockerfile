@@ -10,6 +10,10 @@ RUN apt-get update && apt-get install -y libuuid1 libgl1-mesa-dev
 COPY package*.json ./
 RUN npm install
 
+# Run migrations:
+COPY prisma ./prisma/
+RUN npx prisma generate
+
 # Copy all files:
 COPY . .
 
