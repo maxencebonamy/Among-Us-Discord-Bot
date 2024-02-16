@@ -21,8 +21,8 @@ export const formatLevel = (level: TaskLevel): string => {
 	}
 }
 
-export const SimpleTaskTypeSchema = TaskTypeSchema.omit({
-	id: true,
-	createdAt: true,
-	updatedAt: true
+export const SimpleTaskTypeSchema = TaskTypeSchema.pick({
+	name: true,
+	description: true,
+	level: true
 })
