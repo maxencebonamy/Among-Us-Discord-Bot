@@ -1,4 +1,4 @@
-import { db } from "@/lib/db"
+import { prisma } from "@/lib/db"
 import type { ConfigGetterArgs, ConfigSetterArgs } from "./config.type"
 
 export class Config {
@@ -6,7 +6,7 @@ export class Config {
 	static async add({ key, value }: ConfigSetterArgs): Promise<void> {
 		if (await Config.exists({ key })) return
 
-		await db.config.create({
+		await prisma.config.create({
 			data: {
 				key,
 				value
@@ -15,7 +15,7 @@ export class Config {
 	}
 
 	static async get({ key }: ConfigGetterArgs): Promise<string | null> {
-		const config = await db.config.findFirst({
+		const config = await prisma.config.findFirst({
 			where: {
 				key
 			}
@@ -25,7 +25,7 @@ export class Config {
 	}
 
 	static async getAll(): Promise<Record<string, string>> {
-		const config = await db.config.findMany({
+		const config = await prisma.config.findMany({
 			select: {
 				key: true,
 				value: true
@@ -47,7 +47,7 @@ export class Config {
 			return
 		}
 
-		await db.config.update({
+		await prisma.config.update({
 			where: {
 				key
 			},
@@ -58,7 +58,7 @@ export class Config {
 	}
 
 	static async delete({ key }: ConfigGetterArgs): Promise<void> {
-		await db.config.delete({
+		await prisma.config.delete({
 			where: {
 				key
 			}

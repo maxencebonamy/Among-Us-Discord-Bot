@@ -5,6 +5,17 @@ generator client {
     provider = "prisma-client-js"
 }
 
+generator zod {
+    provider              = "zod-prisma"
+    output                = "./zod"
+    relationModel         = true
+    modelCase             = "PascalCase"
+    modelSuffix           = "Schema"
+    useDecimalJs          = true
+    imports               = null
+    prismaJsonNullability = true
+}
+
 datasource db {
     provider = "postgresql"
     url      = env("DATABASE_URL")
@@ -59,10 +70,10 @@ model User {
 }
 
 model Player {
-    user  User       @relation(fields: [userId], references: [id])
+    user  User       @relation(fields: [userId], references: [id], onDelete: Cascade)
     role  PlayerRole
     alive Boolean    @default(true)
-    game  Game       @relation(fields: [gameId], references: [id])
+    game  Game       @relation(fields: [gameId], references: [id], onDelete: Cascade)
     tasks Task[]
 
     createdAt DateTime @default(now())
@@ -73,9 +84,9 @@ model Player {
 }
 
 model Modo {
-    user  User    @relation(fields: [userId], references: [id])
+    user  User    @relation(fields: [userId], references: [id], onDelete: Cascade)
     admin Boolean @default(false)
-    game  Game    @relation(fields: [gameId], references: [id])
+    game  Game    @relation(fields: [gameId], references: [id], onDelete: Cascade)
     tasks Task[]
 
     createdAt DateTime @default(now())
@@ -86,12 +97,13 @@ model Modo {
 }
 
 model Task {
-    id       Int      @id @default(autoincrement())
-    done     Boolean  @default(false)
-    game     Game     @relation(fields: [gameId], references: [id])
-    player   Player   @relation(fields: [playerId], references: [userId])
-    modo     Modo     @relation(fields: [modoId], references: [userId])
-    taskType TaskType @relation(fields: [taskTypeId], references: [id])
+    id         Int             @id @default(autoincrement())
+    done       Boolean         @default(false)
+    game       Game            @relation(fields: [gameId], references: [id], onDelete: Cascade)
+    player     Player          @relation(fields: [playerId], references: [userId], onDelete: Cascade)
+    modo       Modo            @relation(fields: [modoId], references: [userId], onDelete: Cascade)
+    type       TaskType        @relation(fields: [taskTypeId], references: [id], onDelete: Cascade)
+    parameters TaskParameter[]
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
@@ -103,9 +115,8 @@ model Task {
 }
 
 model Room {
-    id        Int        @id @default(autoincrement())
-    name      String
-    taskTypes TaskType[]
+    id   Int    @id @default(autoincrement())
+    name String
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
@@ -116,11 +127,19 @@ model TaskType {
     name        String
     description String?
     level       TaskLevel
-    room        Room      @relation(fields: [roomId], references: [id])
     tasks       Task[]
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
+}
 
-    roomId Int
+model TaskParameter {
+    key   String  @id
+    value String?
+    task  Task    @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    taskId Int
 }
