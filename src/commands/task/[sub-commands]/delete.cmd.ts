@@ -2,6 +2,7 @@ import { prisma } from "@/lib/db"
 import { createErrorEmbed, createSuccessEmbed } from "@/utils/discord/components/embed"
 import { isAdmin } from "@/utils/discord/roles"
 import type { CommandExecute } from "@/utils/handler/command"
+import { findById } from "../task.util"
 
 export const execute: CommandExecute = async(command) => {
 	if (!await isAdmin(command.member)) {
@@ -19,11 +20,7 @@ export const execute: CommandExecute = async(command) => {
 		return
 	}
 
-	const task = await prisma.taskType.findUnique({
-		where: {
-			id: parseInt(id)
-		}
-	})
+	const task = await findById(parseInt(id))
 	if (!task) {
 		await command.reply({
 			embeds: [createErrorEmbed({ content: `La task n°${id} n'existe pas.` })]

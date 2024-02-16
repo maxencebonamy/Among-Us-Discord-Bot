@@ -34,7 +34,6 @@ export const getDevTeam = (client: DiscordClient): User[] | null => {
 	}
 }
 
-
 logger.info(`Sarting ${displayName} v${version}...`)
 void client.login(env.BOT_TOKEN)
 client.on("ready", async client => {

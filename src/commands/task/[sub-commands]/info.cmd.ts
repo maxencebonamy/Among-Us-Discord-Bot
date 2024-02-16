@@ -1,18 +1,6 @@
-import { prisma } from "@/lib/db"
 import { createCustomEmbed, createErrorEmbed } from "@/utils/discord/components/embed"
 import type { CommandExecute } from "@/utils/handler/command"
-import type { TaskLevel } from "@prisma/client"
-
-const formatLevel = (level: TaskLevel): string => {
-	switch (level) {
-	case "EASY":
-		return "🟢 Facile"
-	case "MEDIUM":
-		return "🟡 Moyen"
-	case "HARD":
-		return "🔴 Difficile"
-	}
-}
+import { findById, formatLevel } from "../task.util"
 
 export const execute: CommandExecute = async(command) => {
 	const id = command.options.getString("id")
@@ -23,11 +11,7 @@ export const execute: CommandExecute = async(command) => {
 		return
 	}
 
-	const task = await prisma.taskType.findUnique({
-		where: {
-			id: parseInt(id)
-		}
-	})
+	const task = await findById(parseInt(id))
 	if (!task) {
 		await command.reply({
 			embeds: [createErrorEmbed({ content: `La task n°${id} n'existe pas.` })]
