@@ -4,13 +4,14 @@ import { createCustomEmbed } from "@/utils/discord/components/embed"
 import { getGuildMembers } from "@/utils/discord/guild"
 import { isAdmin } from "@/utils/discord/roles"
 import type { CommandExecute } from "@/utils/handler/command"
-import { createChannel, createPlayersSelectMenu } from "./init.util"
+import { createPlayersSelectMenu } from "./init.util"
 import { replyError } from "@/utils/discord/command"
-import type { GuildMember, StringSelectMenuInteraction } from "discord.js"
+import { ChannelType, type GuildMember, type StringSelectMenuInteraction } from "discord.js"
 import { createRow } from "@/utils/discord/components/row"
 import { createCancelButton, createOkButton } from "@/utils/discord/components/button"
 import { PlayerRole } from "@prisma/client"
 import { log } from "@/utils/discord/channels"
+import { colors } from "@/utils/game/colors"
 
 export const execute: CommandExecute = async(command) => {
 	// Vérifier si l'utilisateur est un administrateur
@@ -88,16 +89,16 @@ export const execute: CommandExecute = async(command) => {
 		if (interaction.customId === "ok") {
 			await command.editReply({
 				embeds: [createCustomEmbed({
-					title: "🙋 Sélection des joueurs",
-					content: "La partie va être lancée."
+					title: "🎮 Création de la partie",
+					content: "La partie va être créée."
 				})],
 				components: []
 			})
 		} else {
 			await command.editReply({
 				embeds: [createCustomEmbed({
-					title: "🙋 Sélection des joueurs",
-					content: "La partie n'a pas été lancée."
+					title: "🎮 Création de la partie",
+					content: "La partie n'a pas été créée."
 				})],
 				components: []
 			})
@@ -111,23 +112,45 @@ export const execute: CommandExecute = async(command) => {
 		}
 	})
 
-	// Ajouter les joueurs à la partie
-	const selectedPlayers = []
-	for (const player of selectedMembers) {
-		const user = await prisma.user.findUnique({ where: { discordId: player.id } })
-		if (!user) {
-			continue
-		}
-
-		selectedPlayers.push({
-			gameId: game.id,
-			userId: user.id,
-			role: PlayerRole.CREWMATE
-		})
+	// Création d'un channel par joueur
+	const playersCategory = guild.channels.cache.get(guilds.main.channels.playersCategory)
+	if (!playersCategory) {
+		await replyError(command, "La catégorie des joueurs n'a pas été trouvée.")
+		return
 	}
-	await prisma.player.createMany({
-		data: selectedPlayers
-	})
+	let index = 0
+	for (const player of selectedMembers) {
+		const color = await prisma.playerColor.findFirst({
+			where: { name: colors[index].name }
+		})
+		if (!color) continue
+
+		const playerChannel = await guild.channels.create({
+			name: `${color.emoji}｜${player.displayName}`,
+			type: ChannelType.GuildText,
+			parent: playersCategory.id
+		})
+		await playerChannel.permissionOverwrites.edit(player.id, {
+			ReadMessageHistory: true,
+			SendMessages: true,
+			ViewChannel: true
+		})
+
+		const user = await prisma.user.findUnique({ where: { discordId: player.id } })
+		if (!user) continue
+
+		await prisma.player.createMany({
+			data: {
+				gameId: game.id,
+				userId: user.id,
+				role: PlayerRole.CREWMATE,
+				channelId: playerChannel.id,
+				colorId: color.id
+			}
+		})
+
+		index++
+	}
 
 	// Log
 	const commandUser = await prisma.user.findUnique({ where: { discordId: command.user.id } })

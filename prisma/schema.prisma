@@ -51,9 +51,9 @@ model Config {
 }
 
 model Game {
-    id                Int        @id @default(autoincrement())
-    status            GameStatus @default(WAITING)
-    players           Player[]
+    id      Int        @id @default(autoincrement())
+    status  GameStatus @default(WAITING)
+    players Player[]
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
@@ -70,11 +70,13 @@ model User {
 }
 
 model Player {
-    id    Int        @id @default(autoincrement())
-    user  User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-    role  PlayerRole
-    alive Boolean    @default(true)
-    game  Game       @relation(fields: [gameId], references: [id], onDelete: Cascade)
+    id        Int         @id @default(autoincrement())
+    user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+    role      PlayerRole
+    alive     Boolean     @default(true)
+    game      Game        @relation(fields: [gameId], references: [id], onDelete: Cascade)
+    channelId String
+    color     PlayerColor @relation(fields: [colorId], references: [id])
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
@@ -83,15 +85,18 @@ model Player {
     gameId         Int
     playerTask     PlayerTask[]
     playerCooldown PlayerCooldown[]
+    colorId        Int
 }
 
 model PlayerColor {
-    id   Int    @id @default(autoincrement())
-    name String
-    hex  String
+    id    Int    @id @default(autoincrement())
+    name  String
+    hex   String
+    emoji String
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
+    Player    Player[]
 }
 
 model Task {

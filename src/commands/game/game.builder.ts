@@ -11,3 +11,12 @@ export const slashCommand: SlashCommandDefition = new SlashCommandBuilder()
 	.addSubcommand(subCommand => subCommand
 		.setName("init")
 		.setDescription("Initialiser une partie"))
+
+	// cancel
+	.addSubcommand(subCommand => subCommand
+		.setName("cancel")
+		.setDescription("Annuler une partie")
+		.addIntegerOption(option => option
+			.setName("id")
+			.setDescription("ID de la partie")
+			.setRequired(true)))

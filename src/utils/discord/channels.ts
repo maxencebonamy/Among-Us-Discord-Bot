@@ -2,6 +2,7 @@ import { getGuild, guilds } from "@/configs/guild"
 import { createCustomEmbed } from "./components/embed"
 import { client } from "@/client"
 import { ChannelType } from "discord.js"
+import { logger } from "../logger"
 
 export const log = async(title: string, content: string): Promise<void> => {
 	const guild = await getGuild(client, "main")
@@ -20,4 +21,5 @@ export const log = async(title: string, content: string): Promise<void> => {
 	await logChannel.send({
 		embeds: [createCustomEmbed({ title, content })]
 	})
+	logger.info(content)
 }
