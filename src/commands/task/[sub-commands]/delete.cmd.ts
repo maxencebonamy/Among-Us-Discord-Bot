@@ -28,7 +28,7 @@ export const execute: CommandExecute = async(command) => {
 		return
 	}
 
-	await prisma.taskType.delete({
+	await prisma.task.delete({
 		where: {
 			id: task.id
 		}

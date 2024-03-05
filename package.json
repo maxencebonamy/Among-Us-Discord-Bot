@@ -47,7 +47,8 @@
 	"eslintConfig": {
 		"extends": "@maxencebonamy",
 		"ignorePatterns": [
-			"prisma/zod/*.ts"
+			"prisma/zod/*.ts",
+			"test.js"
 		]
 	},
 	"engines": {

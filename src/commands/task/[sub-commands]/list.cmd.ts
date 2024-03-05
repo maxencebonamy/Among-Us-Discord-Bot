@@ -4,7 +4,7 @@ import { createCustomEmbed, createErrorEmbed } from "@/utils/discord/components/
 import { prisma } from "@/lib/db"
 
 export const execute: CommandExecute = async(command) => {
-	const tasks = await prisma.taskType.findMany()
+	const tasks = await prisma.task.findMany()
 	if (!tasks) {
 		await command.reply({
 			embeds: [createErrorEmbed({ content: "Une erreur est survenue lors de la récupération des tasks." })]

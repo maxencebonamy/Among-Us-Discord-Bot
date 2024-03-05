@@ -1,9 +1,9 @@
 import { prisma } from "@/lib/db"
-import type { TaskLevel, TaskType } from "@prisma/client"
-import { TaskTypeSchema } from "prisma/zod"
+import type { Task, TaskLevel } from "@prisma/client"
+import { TaskSchema } from "prisma/zod"
 
-export const findById = async(id: number): Promise<TaskType | null> => {
-	return await prisma.taskType.findUnique({
+export const findById = async(id: number): Promise<Task | null> => {
+	return await prisma.task.findUnique({
 		where: {
 			id
 		}
@@ -21,7 +21,7 @@ export const formatLevel = (level: TaskLevel): string => {
 	}
 }
 
-export const SimpleTaskTypeSchema = TaskTypeSchema.pick({
+export const SimpleTaskTypeSchema = TaskSchema.pick({
 	name: true,
 	description: true,
 	level: true

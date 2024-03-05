@@ -1,4 +1,4 @@
-import { Config } from "@/models/config"
+import { prisma } from "@/lib/db"
 import { createSuccessEmbed } from "@/utils/discord/components/embed"
 import { isAdmin } from "@/utils/discord/roles"
 import type { CommandExecute } from "@/utils/handler/command"
@@ -9,7 +9,19 @@ export const execute: CommandExecute = async(command) => {
 		return
 	}
 
-	const config = await Config.getAll()
+	const config = await prisma.config.findMany({
+		select: {
+			key: true,
+			value: true
+		}
+	}).then(config => {
+		const output: Record<string, string> = {}
+		Object.entries(config).forEach(([_, value]) => {
+			if (value.value === null) return
+			output[value.key] = value.value
+		})
+		return output
+	})
 
 	const configString = JSON.stringify(config, null, 4)
 

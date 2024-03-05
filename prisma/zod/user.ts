@@ -1,6 +1,6 @@
 import * as z from "zod"
 import * as imports from "../null"
-import { CompletePlayer, RelatedPlayerSchema, CompleteModo, RelatedModoSchema } from "./index"
+import { CompletePlayer, RelatedPlayerSchema } from "./index"
 
 export const UserSchema = z.object({
   id: z.number().int(),
@@ -12,7 +12,6 @@ export const UserSchema = z.object({
 
 export interface CompleteUser extends z.infer<typeof UserSchema> {
   player: CompletePlayer[]
-  modo: CompleteModo[]
 }
 
 /**
@@ -22,5 +21,4 @@ export interface CompleteUser extends z.infer<typeof UserSchema> {
  */
 export const RelatedUserSchema: z.ZodSchema<CompleteUser> = z.lazy(() => UserSchema.extend({
   player: RelatedPlayerSchema.array(),
-  modo: RelatedModoSchema.array(),
 }))

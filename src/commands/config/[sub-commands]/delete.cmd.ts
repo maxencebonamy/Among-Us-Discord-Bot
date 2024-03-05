@@ -1,11 +1,13 @@
-import { Config } from "@/models/config"
+import { prisma } from "@/lib/db"
 import { createErrorEmbed, createSuccessEmbed } from "@/utils/discord/components/embed"
 import { isAdmin } from "@/utils/discord/roles"
 import type { CommandExecute } from "@/utils/handler/command"
 
 export const execute: CommandExecute = async(command) => {
 	if (!await isAdmin(command.member)) {
-		await command.reply("Vous n'avez pas la permission d'utiliser cette commande.")
+		await command.reply({
+			embeds: [createErrorEmbed({ content: "Vous n'avez pas la permission d'utiliser cette commande." })]
+		})
 		return
 	}
 
@@ -14,7 +16,7 @@ export const execute: CommandExecute = async(command) => {
 	let embed = null
 
 	try {
-		await Config.delete({ key })
+		await prisma.config.delete({ where: { key } })
 		embed = createSuccessEmbed({ content: `La valeur de configuration "${key}" a été supprimée avec succès.` })
 	} catch (error) {
 		embed = createErrorEmbed({ content: `Une erreur est survenue lors de la suppression de la valeur de configuration "${key}".` })

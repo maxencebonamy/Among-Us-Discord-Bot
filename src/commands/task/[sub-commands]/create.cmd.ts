@@ -26,7 +26,7 @@ export const execute: CommandExecute = async(command) => {
 		return
 	}
 
-	await prisma.taskType.create({
+	await prisma.task.create({
 		data: parsedData.data
 	})
 

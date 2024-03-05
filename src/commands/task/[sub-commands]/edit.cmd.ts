@@ -42,7 +42,7 @@ export const execute: CommandExecute = async(command) => {
 		return
 	}
 
-	await prisma.taskType.update({
+	await prisma.task.update({
 		where: {
 			id: task.id
 		},

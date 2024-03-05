@@ -38,6 +38,10 @@ enum GameStatus {
     FINISHED
 }
 
+enum CooldownType {
+    KILL
+}
+
 model Config {
     key   String  @id
     value String?
@@ -47,99 +51,103 @@ model Config {
 }
 
 model Game {
-    id      Int        @id @default(autoincrement())
-    status  GameStatus @default(WAITING)
-    tasks   Task[]
-    players Player[]
-    modos   Modo[]
+    id                Int        @id @default(autoincrement())
+    status            GameStatus @default(WAITING)
+    players           Player[]
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 }
 
 model User {
-    id        Int    @id @default(autoincrement())
-    discordId String @unique
+    id        Int      @id @default(autoincrement())
+    discordId String   @unique
     name      String
+    player    Player[]
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
-
-    player Player[]
-    modo   Modo[]
 }
 
 model Player {
+    id    Int        @id @default(autoincrement())
     user  User       @relation(fields: [userId], references: [id], onDelete: Cascade)
     role  PlayerRole
     alive Boolean    @default(true)
     game  Game       @relation(fields: [gameId], references: [id], onDelete: Cascade)
-    tasks Task[]
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 
-    userId Int @id
-    gameId Int
+    userId         Int
+    gameId         Int
+    playerTask     PlayerTask[]
+    playerCooldown PlayerCooldown[]
 }
 
-model Modo {
-    user  User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-    admin Boolean @default(false)
-    game  Game    @relation(fields: [gameId], references: [id], onDelete: Cascade)
-    tasks Task[]
+model PlayerColor {
+    id   Int    @id @default(autoincrement())
+    name String
+    hex  String
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
-
-    userId Int @id
-    gameId Int
 }
 
 model Task {
-    id         Int             @id @default(autoincrement())
-    done       Boolean         @default(false)
-    game       Game            @relation(fields: [gameId], references: [id], onDelete: Cascade)
-    player     Player          @relation(fields: [playerId], references: [userId], onDelete: Cascade)
-    modo       Modo            @relation(fields: [modoId], references: [userId], onDelete: Cascade)
-    type       TaskType        @relation(fields: [taskTypeId], references: [id], onDelete: Cascade)
-    parameters TaskParameter[]
+    id          Int       @id @default(autoincrement())
+    name        String
+    description String
+    level       TaskLevel
+    channelId   String?
 
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
-
-    gameId     Int
-    playerId   Int
-    modoId     Int
-    taskTypeId Int
+    createdAt  DateTime     @default(now())
+    updatedAt  DateTime     @updatedAt
+    playerTask PlayerTask[]
 }
 
 model Room {
-    id   Int    @id @default(autoincrement())
-    name String
+    id        Int    @id @default(autoincrement())
+    name      String
+    channelId String
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 }
 
-model TaskType {
-    id          Int       @id @default(autoincrement())
-    name        String
-    description String?
-    level       TaskLevel
-    tasks       Task[]
+model PlayerTask {
+    player Player  @relation(fields: [playerId], references: [id])
+    task   Task    @relation(fields: [taskId], references: [id])
+    done   Boolean @default(false)
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    playerId Int
+    taskId   Int
+
+    @@id([playerId, taskId])
+}
+
+model Cooldown {
+    id             Int              @id @default(autoincrement())
+    type           CooldownType
+    expiresAt      DateTime
+    playerCooldown PlayerCooldown[]
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 }
 
-model TaskParameter {
-    key   String  @id
-    value String?
-    task  Task    @relation(fields: [taskId], references: [id], onDelete: Cascade)
+model PlayerCooldown {
+    player   Player   @relation(fields: [playerId], references: [id])
+    cooldown Cooldown @relation(fields: [cooldownId], references: [id])
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 
-    taskId Int
+    playerId   Int
+    cooldownId Int
+
+    @@id([playerId, cooldownId])
 }

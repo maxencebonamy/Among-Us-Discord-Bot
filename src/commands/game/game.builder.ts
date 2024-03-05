@@ -7,7 +7,7 @@ export const slashCommand: SlashCommandDefition = new SlashCommandBuilder()
 	.setName("game")
 	.setDescription("Gérer les parties de Among Us")
 
-	// launch
+	// init
 	.addSubcommand(subCommand => subCommand
-		.setName("launch")
-		.setDescription("Lancer une partie de Among Us"))
+		.setName("init")
+		.setDescription("Initialiser une partie"))

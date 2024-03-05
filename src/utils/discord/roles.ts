@@ -1,9 +1,11 @@
-import { Config } from "@/models/config"
+import { guilds } from "@/configs/guild"
 import type { APIInteractionGuildMember, GuildMember, GuildMemberRoleManager } from "discord.js"
 
 export const isAdmin = async(member: GuildMember | APIInteractionGuildMember | null): Promise<boolean> => {
-	const adminRole = await Config.get({ key: "admin-role" }) ?? "Admin"
+	if (!member) return false
+
 	const roles = member?.roles
 	if (!roles) return false
-	return (roles as GuildMemberRoleManager).cache.some(role => role.name === adminRole)
+
+	return (roles as GuildMemberRoleManager).cache.has(guilds.main.roles.admin)
 }

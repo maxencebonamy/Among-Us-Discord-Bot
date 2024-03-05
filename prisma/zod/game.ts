@@ -1,7 +1,7 @@
 import * as z from "zod"
 import * as imports from "../null"
 import { GameStatus } from "@prisma/client"
-import { CompleteTask, RelatedTaskSchema, CompletePlayer, RelatedPlayerSchema, CompleteModo, RelatedModoSchema } from "./index"
+import { CompletePlayer, RelatedPlayerSchema } from "./index"
 
 export const GameSchema = z.object({
   id: z.number().int(),
@@ -11,9 +11,7 @@ export const GameSchema = z.object({
 })
 
 export interface CompleteGame extends z.infer<typeof GameSchema> {
-  tasks: CompleteTask[]
   players: CompletePlayer[]
-  modos: CompleteModo[]
 }
 
 /**
@@ -22,7 +20,5 @@ export interface CompleteGame extends z.infer<typeof GameSchema> {
  * NOTE: Lazy required in case of potential circular dependencies within schema
  */
 export const RelatedGameSchema: z.ZodSchema<CompleteGame> = z.lazy(() => GameSchema.extend({
-  tasks: RelatedTaskSchema.array(),
   players: RelatedPlayerSchema.array(),
-  modos: RelatedModoSchema.array(),
 }))
