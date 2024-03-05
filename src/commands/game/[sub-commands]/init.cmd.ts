@@ -20,6 +20,12 @@ export const execute: CommandExecute = async(command) => {
 		return
 	}
 
+	// Vérifier si une partie en attente ou en cours existe
+	if (await prisma.game.findFirst({ where: { status: { in: ["WAITING", "STARTED"] } } })) {
+		await replyError(command, "Une partie est déjà en attente ou en cours.")
+		return
+	}
+
 	// Récupérer les membres du serveur qui ont le rôle "player" (et qui ne sont pas des bots)
 	const guild = await getGuild(command.client, "main")
 	const members = await getGuildMembers(guild)
@@ -82,6 +88,7 @@ export const execute: CommandExecute = async(command) => {
 	})
 
 	// Attendre la confirmation
+	let confirmation = true
 	await confirmationResponse.awaitMessageComponent({
 		filter: interaction => interaction.customId === "ok" || interaction.customId === "cancel",
 		time: 300_000  // 5 min
@@ -95,6 +102,7 @@ export const execute: CommandExecute = async(command) => {
 				components: []
 			})
 		} else {
+			confirmation = false
 			await command.editReply({
 				embeds: [createCustomEmbed({
 					title: "🎮 Création de la partie",
@@ -104,6 +112,7 @@ export const execute: CommandExecute = async(command) => {
 			})
 		}
 	})
+	if (!confirmation) return
 
 	// Créer la partie
 	const game = await prisma.game.create({
@@ -151,6 +160,14 @@ export const execute: CommandExecute = async(command) => {
 
 		index++
 	}
+
+	await command.editReply({
+		embeds: [createCustomEmbed({
+			title: "🎮 Création de la partie",
+			content: "La partie a été créée."
+		})],
+		components: []
+	})
 
 	// Log
 	const commandUser = await prisma.user.findUnique({ where: { discordId: command.user.id } })
