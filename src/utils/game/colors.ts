@@ -1,4 +1,10 @@
-export const colors = [
+export type Color = {
+	name: "Rouge" | "Bleu" | "Vert" | "Jaune" | "Rose" | "Orange" | "Noir" | "Blanc" | "Violet" | "Cyan" | "Vert clair" | "Bleu clair"
+	hex: `#${string}`
+	emoji: string
+}
+
+export const colors: Color[] = [
 	{
 		name: "Rouge",
 		hex: "#FF0000",
@@ -60,3 +66,7 @@ export const colors = [
 		emoji: "🟦"
 	}
 ]
+
+export const getColor = (name: Color["name"]): Color | null => {
+	return colors.find(color => color.name.toLowerCase() === name.toLowerCase()) ?? null
+}

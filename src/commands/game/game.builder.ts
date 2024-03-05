@@ -21,3 +21,18 @@ export const slashCommand: SlashCommandDefition = new SlashCommandBuilder()
 	.addSubcommand(subCommand => subCommand
 		.setName("cancel")
 		.setDescription("Annuler une partie"))
+
+	// pause
+	.addSubcommand(subCommand => subCommand
+		.setName("pause")
+		.setDescription("Mettre en pause une partie"))
+
+	// unpause
+	.addSubcommand(subCommand => subCommand
+		.setName("unpause")
+		.setDescription("Reprendre une partie en pause"))
+
+	// status
+	.addSubcommand(subCommand => subCommand
+		.setName("status")
+		.setDescription("Afficher le statut de la partie"))

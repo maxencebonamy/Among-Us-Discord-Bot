@@ -25,7 +25,7 @@ export const execute: CommandExecute = async(command) => {
 			id: game.id
 		},
 		data: {
-			status: "STARTED"
+			status: "RUNNING"
 		}
 	})
 
@@ -34,7 +34,8 @@ export const execute: CommandExecute = async(command) => {
 		embeds: [createCustomEmbed({
 			title: "🎮 Lancement de la partie",
 			content: "La partie a été lancée."
-		})]
+		})],
+		ephemeral: true
 	})
 
 	// Log

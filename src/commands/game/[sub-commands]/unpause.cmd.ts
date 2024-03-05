@@ -14,18 +14,18 @@ export const execute: CommandExecute = async(command) => {
 		return
 	}
 
-	// Vérifier si une partie en attente ou en cours existe
-	const game = await prisma.game.findFirst({ where: { status: { in: ["WAITING", "RUNNING", "PAUSED"] } } })
+	// Vérifier si une partie en pause existe
+	const game = await prisma.game.findFirst({ where: { status: { in: ["PAUSED"] } } })
 	if (!game) {
-		await replyError(command, "Aucune partie est en attente ou en cours.")
+		await replyError(command, "Aucune partie est en pause.")
 		return
 	}
 
 	// Créer le message de confirmation
 	const confirmationResponse = await command.reply({
 		embeds: [createCustomEmbed({
-			title: "🎮 Annulation de la partie",
-			content: "Êtes-vous sûr de vouloir annuler la partie ?"
+			title: "🎮 Reprise de la partie",
+			content: "Êtes-vous sûr de vouloir reprendre la partie ?"
 		})],
 		components: [createRow(createOkButton(), createCancelButton())],
 		ephemeral: true
@@ -41,8 +41,8 @@ export const execute: CommandExecute = async(command) => {
 			confirmation = false
 			await command.editReply({
 				embeds: [createCustomEmbed({
-					title: "🎮 Annulation de la partie",
-					content: "La partie n'a pas été annulée."
+					title: "🎮 Reprise de la partie",
+					content: "La partie n'a pas été reprise."
 				})],
 				components: []
 			})
@@ -50,32 +50,24 @@ export const execute: CommandExecute = async(command) => {
 	})
 	if (!confirmation) return
 
-	// Supprimer les channels des joueurs
-	const players = await prisma.player.findMany({ where: { game } })
-	const channels = await command.guild?.channels.fetch()
-	for (const player of players) {
-		const channel = channels?.find(channel => channel && channel.id === player.channelId)
-		if (channel) await channel.delete()
-	}
-
-	// Annuler la partie
+	// Reprendre la partie
 	await prisma.game.update({
 		where: {
 			id: game.id
 		},
 		data: {
-			status: "CANCELED"
+			status: "RUNNING"
 		}
 	})
 	await command.editReply({
 		embeds: [createCustomEmbed({
-			title: "🎮 Partie annulée",
-			content: "La partie a été annulée."
+			title: "🎮 Partie reprise",
+			content: "La partie a été reprise."
 		})],
 		components: []
 	})
 
 	// Log
 	const commandUser = await prisma.user.findUnique({ where: { discordId: command.user.id } })
-	await log("🎮 Partie annulée", `La partie #${game.id} a été annulée par ${commandUser?.name ?? "?"}.`)
+	await log("🎮 Partie reprise", `La partie #${game.id} a été reprise par ${commandUser?.name ?? "?"}.`)
 }

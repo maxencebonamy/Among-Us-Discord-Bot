@@ -21,7 +21,7 @@ export const execute: CommandExecute = async(command) => {
 	}
 
 	// Vérifier si une partie en attente ou en cours existe
-	if (await prisma.game.findFirst({ where: { status: { in: ["WAITING", "STARTED"] } } })) {
+	if (await prisma.game.findFirst({ where: { status: { in: ["WAITING", "RUNNING", "PAUSED"] } } })) {
 		await replyError(command, "Une partie est déjà en attente ou en cours.")
 		return
 	}

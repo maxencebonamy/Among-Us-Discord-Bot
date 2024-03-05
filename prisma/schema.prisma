@@ -34,8 +34,10 @@ enum TaskLevel {
 
 enum GameStatus {
     WAITING
-    STARTED
+    RUNNING
     FINISHED
+    PAUSED
+    CANCELED
 }
 
 enum CooldownType {
@@ -76,7 +78,7 @@ model Player {
     alive     Boolean     @default(true)
     game      Game        @relation(fields: [gameId], references: [id], onDelete: Cascade)
     channelId String
-    color     PlayerColor @relation(fields: [colorId], references: [id])
+    color     PlayerColor @relation(fields: [colorId], references: [id], onDelete: Cascade)
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
