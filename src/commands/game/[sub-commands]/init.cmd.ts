@@ -4,11 +4,11 @@ import { createCustomEmbed } from "@/utils/discord/components/embed"
 import { getGuildMembers } from "@/utils/discord/guild"
 import { isAdmin } from "@/utils/discord/roles"
 import type { CommandExecute } from "@/utils/handler/command"
-import { createPlayersSelectMenu } from "./init.util"
-import { replyError } from "@/utils/discord/command"
-import { ChannelType, type GuildMember, type StringSelectMenuInteraction } from "discord.js"
+import { createPlayersAndChannels, createPlayersSelectMenu, drawRandomImpostors } from "./init.util"
+import { editReplyEmbed, getCommandUser, replyError } from "@/utils/discord/command"
+import { ButtonStyle, ChannelType, type GuildMember, type StringSelectMenuInteraction } from "discord.js"
 import { createRow } from "@/utils/discord/components/row"
-import { createCancelButton, createOkButton } from "@/utils/discord/components/button"
+import { createButton, createCancelButton, createOkButton } from "@/utils/discord/components/button"
 import { PlayerRole } from "@prisma/client"
 import { log } from "@/utils/discord/channels"
 import { colors } from "@/utils/game/colors"
@@ -94,32 +94,16 @@ export const execute: CommandExecute = async(command) => {
 		time: 300_000  // 5 min
 	}).then(async interaction => {
 		if (interaction.customId === "ok") {
-			await command.editReply({
-				embeds: [createCustomEmbed({
-					title: "🎮 Création de la partie",
-					content: "La partie va être créée."
-				})],
-				components: []
-			})
+			await editReplyEmbed(command, "🎮 Création de la partie", "La partie va être créée.")
 		} else {
 			confirmation = false
-			await command.editReply({
-				embeds: [createCustomEmbed({
-					title: "🎮 Création de la partie",
-					content: "La partie n'a pas été créée."
-				})],
-				components: []
-			})
+			await editReplyEmbed(command, "🎮 Création de la partie", "La partie n'a pas été créée.")
 		}
 	})
 	if (!confirmation) return
 
 	// Créer la partie
-	const game = await prisma.game.create({
-		data: {
-			status: "WAITING"
-		}
-	})
+	const game = await prisma.game.create({ data: { status: "WAITING" } })
 
 	// Création d'un channel par joueur
 	const playersCategory = guild.channels.cache.get(guilds.main.channels.playersCategory)
@@ -127,40 +111,47 @@ export const execute: CommandExecute = async(command) => {
 		await replyError(command, "La catégorie des joueurs n'a pas été trouvée.")
 		return
 	}
-	let index = 0
-	for (const player of selectedMembers) {
-		const color = await prisma.playerColor.findFirst({
-			where: { name: colors[index].name }
-		})
-		if (!color) continue
+	await createPlayersAndChannels(game, guild, playersCategory, selectedMembers)
 
-		const playerChannel = await guild.channels.create({
-			name: `${color.emoji}｜${player.displayName}`,
-			type: ChannelType.GuildText,
-			parent: playersCategory.id
-		})
-		await playerChannel.permissionOverwrites.edit(player.id, {
-			ReadMessageHistory: true,
-			SendMessages: true,
-			ViewChannel: true
+	// Sélection des imposteurs
+	let impostors = drawRandomImpostors(selectedMembers)
+	let redraw = true
+	while (redraw) {
+		const impostorsResponse = await command.editReply({
+			embeds: [createCustomEmbed({
+				title: "🎭 Sélection des imposteurs",
+				content: `Les imposteurs sélectionnés sont :\n${
+					impostors.map(player => `- ${player?.displayName}`).join("\n")
+				}`
+			})],
+			components: [createRow(createOkButton(), createButton({ id: "redraw", label: "Refaire", style: ButtonStyle.Secondary }))]
 		})
 
-		const user = await prisma.user.findUnique({ where: { discordId: player.id } })
-		if (!user) continue
-
-		await prisma.player.createMany({
-			data: {
-				gameId: game.id,
-				userId: user.id,
-				role: PlayerRole.CREWMATE,
-				channelId: playerChannel.id,
-				colorId: color.id
+		await impostorsResponse.awaitMessageComponent({
+			filter: interaction => interaction.customId === "ok" || interaction.customId === "redraw",
+			time: 300_000  // 5 min
+		}).then(interaction => {
+			if (interaction.customId !== "ok")  {
+				impostors = drawRandomImpostors(selectedMembers)
+			} else {
+				redraw = false
 			}
 		})
+	}
+	for (const impostor of impostors) {
+		const user = await prisma.user.findUnique({ where: { discordId: impostor.id } })
+		if (!user) return
 
-		index++
+		const player = await prisma.player.findFirst({ where: { userId: user.id, gameId: game.id } })
+		if (!player) return
+
+		await prisma.player.update({
+			where: { id: player.id },
+			data: { role: PlayerRole.IMPOSTOR }
+		})
 	}
 
+	// Réponse
 	await command.editReply({
 		embeds: [createCustomEmbed({
 			title: "🎮 Création de la partie",
@@ -170,6 +161,6 @@ export const execute: CommandExecute = async(command) => {
 	})
 
 	// Log
-	const commandUser = await prisma.user.findUnique({ where: { discordId: command.user.id } })
+	const commandUser = await getCommandUser(command)
 	await log("🎮 Création d'une partie", `La partie #${game.id} a été créée par ${commandUser?.name ?? "?"}.`)
 }
