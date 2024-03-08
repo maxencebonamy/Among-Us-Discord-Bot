@@ -1,6 +1,5 @@
 import { PrismaClient } from "@prisma/client"
-import { seedUsers } from "./seeders/users"
-import { seedTaskTypes } from "./seeders/taskTypes"
+import { seedTasks } from "./seeders/tasks"
 import { seedRooms } from "./seeders/rooms"
 import { seedConfig } from "./seeders/config"
 import { seedColors } from "./seeders/colors"
@@ -10,9 +9,8 @@ const prisma = new PrismaClient()
 async function main(): Promise<void> {
 	await seedConfig(prisma)
 	await seedColors(prisma)
-	// await seedUsers(prisma)
-	// await seedRooms(prisma)
-	// await seedTaskTypes(prisma)
+	await seedRooms(prisma)
+	await seedTasks(prisma)
 }
 
 main()

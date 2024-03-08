@@ -3,6 +3,7 @@ import { getGuild, guilds } from "@/configs/guild"
 import { prisma } from "@/lib/db"
 import { createEmbed } from "@/utils/discord/components/embed"
 import { getColor } from "@/utils/game/colors"
+import { formatPlayer } from "@/utils/game/players"
 import type { TaskExecute, TaskInterval } from "@/utils/handler/task"
 import { ChannelType } from "discord.js"
 
@@ -58,7 +59,7 @@ export const execute: TaskExecute = async() => {
 	// Créer les embeds
 	const embeds = players.map(player => createEmbed({
 		color: (player.color.hex as `#${string}`) ?? getColor("Noir")?.hex,
-		title: `${player.alive ? "✅" : "💀"} ${player.user.name} est ${player.alive ? "en vie" : "mort(e)"}.`,
+		title: `${player.alive ? "✅" : "💀"} ${formatPlayer(player)} est ${player.alive ? "en vie" : "mort(e)"}.`,
 		content: " "
 	}))
 

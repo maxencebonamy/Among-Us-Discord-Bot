@@ -1,7 +1,7 @@
 import * as z from "zod"
 import * as imports from "../null"
 import { TaskLevel } from "@prisma/client"
-import { CompletePlayerTask, RelatedPlayerTaskSchema } from "./index"
+import { CompletePlayerTask, RelatedPlayerTaskSchema, CompleteRoomTask, RelatedRoomTaskSchema } from "./index"
 
 export const TaskSchema = z.object({
   id: z.number().int(),
@@ -15,6 +15,7 @@ export const TaskSchema = z.object({
 
 export interface CompleteTask extends z.infer<typeof TaskSchema> {
   playerTask: CompletePlayerTask[]
+  roomTask: CompleteRoomTask[]
 }
 
 /**
@@ -24,4 +25,5 @@ export interface CompleteTask extends z.infer<typeof TaskSchema> {
  */
 export const RelatedTaskSchema: z.ZodSchema<CompleteTask> = z.lazy(() => TaskSchema.extend({
   playerTask: RelatedPlayerTaskSchema.array(),
+  roomTask: RelatedRoomTaskSchema.array(),
 }))

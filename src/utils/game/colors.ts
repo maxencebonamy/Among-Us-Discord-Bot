@@ -1,5 +1,5 @@
 export type Color = {
-	name: "Rouge" | "Bleu" | "Vert" | "Jaune" | "Rose" | "Orange" | "Noir" | "Blanc" | "Violet" | "Cyan" | "Vert clair" | "Bleu clair"
+	name: "Rouge" | "Bleu foncé" | "Vert foncé" | "Jaune" | "Rose" | "Orange" | "Noir" | "Blanc" | "Violet" | "Marron" | "Vert clair" | "Bleu clair"
 	hex: `#${string}`
 	emoji: string
 }
@@ -7,63 +7,63 @@ export type Color = {
 export const colors: Color[] = [
 	{
 		name: "Rouge",
-		hex: "#FF0000",
+		hex: "#d21f32",
 		emoji: "🔴"
 	},
 	{
-		name: "Bleu",
-		hex: "#0000FF",
+		name: "Bleu foncé",
+		hex: "#032467",
 		emoji: "🔵"
 	},
 	{
-		name: "Vert",
-		hex: "#00FF00",
+		name: "Vert foncé",
+		hex: "#014d29",
 		emoji: "🟢"
 	},
 	{
 		name: "Jaune",
-		hex: "#FFFF00",
+		hex: "#ffdf38",
 		emoji: "🟡"
 	},
 	{
 		name: "Rose",
-		hex: "#FF00FF",
+		hex: "#efaabd",
 		emoji: "🟣"
 	},
 	{
 		name: "Orange",
-		hex: "#FFA500",
+		hex: "#e05711",
 		emoji: "🟠"
 	},
 	{
 		name: "Noir",
-		hex: "#000000",
+		hex: "#131313",
 		emoji: "⚫"
 	},
 	{
 		name: "Blanc",
-		hex: "#FFFFFF",
+		hex: "#eeeaf0",
 		emoji: "⚪"
 	},
 	{
 		name: "Violet",
-		hex: "#800080",
-		emoji: "🟪"
+		hex: "#411e5b",
+		emoji: "🟣"
 	},
 	{
-		name: "Cyan",
-		hex: "#00FFFF",
-		emoji: "🟦"
+		name: "Marron",
+		hex: "#4b3329",
+		emoji: "🟤"
 	},
 	{
 		name: "Vert clair",
-		hex: "#90EE90",
-		emoji: "🟩"
+		hex: "#6dab30",
+		emoji: "🟢"
 	},
 	{
 		name: "Bleu clair",
-		hex: "#ADD8E6",
-		emoji: "🟦"
+		hex: "#18aad9",
+		emoji: "🔵"
 	}
 ]
 

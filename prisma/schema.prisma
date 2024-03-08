@@ -111,15 +111,17 @@ model Task {
     createdAt  DateTime     @default(now())
     updatedAt  DateTime     @updatedAt
     playerTask PlayerTask[]
+    roomTask   RoomTask[]
 }
 
 model Room {
-    id        Int    @id @default(autoincrement())
+    id        Int     @id @default(autoincrement())
     name      String
-    channelId String
+    channelId String?
 
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
+    createdAt DateTime   @default(now())
+    updatedAt DateTime   @updatedAt
+    roomTask  RoomTask[]
 }
 
 model PlayerTask {
@@ -157,4 +159,17 @@ model PlayerCooldown {
     cooldownId Int
 
     @@id([playerId, cooldownId])
+}
+
+model RoomTask {
+    room Room @relation(fields: [roomId], references: [id])
+    task Task @relation(fields: [taskId], references: [id])
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    roomId Int
+    taskId Int
+
+    @@id([roomId, taskId])
 }

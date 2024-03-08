@@ -12,6 +12,7 @@ import { createButton, createCancelButton, createOkButton } from "@/utils/discor
 import { PlayerRole } from "@prisma/client"
 import { log } from "@/utils/discord/channels"
 import { colors } from "@/utils/game/colors"
+import { formatPlayer, formatPlayerWithRole } from "@/utils/game/players"
 
 export const execute: CommandExecute = async(command) => {
 	// Vérifier si l'utilisateur est un administrateur
@@ -29,9 +30,16 @@ export const execute: CommandExecute = async(command) => {
 	// Récupérer les membres du serveur qui ont le rôle "player" (et qui ne sont pas des bots)
 	const guild = await getGuild(command.client, "main")
 	const members = await getGuildMembers(guild)
-	const players = members?.filter(member => !member.user.bot && member.roles.cache.has(guilds.main.roles.player))
-	if (!players) {
+	const playerMembers = members?.filter(member => !member.user.bot && member.roles.cache.has(guilds.main.roles.player))
+	if (!playerMembers) {
 		await replyError(command, "Aucun joueur n'a été trouvé.")
+		return
+	}
+
+	// Récupérer le channel admin
+	const adminChannel = await guild.channels.fetch(guilds.main.channels.admins)
+	if (!adminChannel || adminChannel.type !== ChannelType.GuildText) {
+		await replyError(command, "Le channel admin n'a pas été trouvé.")
 		return
 	}
 
@@ -44,7 +52,7 @@ export const execute: CommandExecute = async(command) => {
 	const nbPlayers = Number.parseInt(nbPlayersConfig.value)
 
 	// Vérifier si le nombre de joueurs est suffisant
-	if (players.size < nbPlayers) {
+	if (playerMembers.size < nbPlayers) {
 		await replyError(command, `Il n'y a pas assez de joueurs pour lancer une partie (au moins ${nbPlayers}).`)
 		return
 	}
@@ -55,7 +63,7 @@ export const execute: CommandExecute = async(command) => {
 			title: "🙋 Sélection des joueurs",
 			content: `Sélectionnez les joueurs qui participeront à la partie (${nbPlayers} joueurs).`
 		})],
-		components: [createPlayersSelectMenu(players, nbPlayers)],
+		components: [createPlayersSelectMenu(playerMembers, nbPlayers)],
 		ephemeral: true
 	})
 
@@ -163,4 +171,17 @@ export const execute: CommandExecute = async(command) => {
 	// Log
 	const commandUser = await getCommandUser(command)
 	await log("🎮 Création d'une partie", `La partie #${game.id} a été créée par ${commandUser?.name ?? "?"}.`)
+
+	// Message admin
+	const players = await prisma.player.findMany({ where: { gameId: game.id }, include: { user: true, color: true } })
+	const content = `Les joueurs sélectionnés sont :\n${
+		players.map(player => `- ${formatPlayerWithRole(player)}`).join("\n")
+	}`
+
+	await adminChannel.send({
+		embeds: [createCustomEmbed({
+			title: "🎮 Une partie a été créée",
+			content
+		})]
+	})
 }

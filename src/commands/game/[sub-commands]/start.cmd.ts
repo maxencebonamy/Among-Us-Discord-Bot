@@ -39,13 +39,12 @@ export const execute: CommandExecute = async(command) => {
 		if (!playerChannel) continue
 		if (playerChannel.type !== ChannelType.GuildText) continue
 
-		let content = ""
+		const content = texts[player.role].replace("[color]", `${player.color.emoji} ${player.color.name.toUpperCase()}`)
 		if (player.role === "IMPOSTOR") {
 			const impostor = players.find(p => p.id !== player.id && p.role === "IMPOSTOR")
+			console.log(impostor)
 			if (!impostor) continue
-			content += texts.IMPOSTOR.replace("[impostor]", formatPlayer(impostor))
-		} else {
-			content += texts.CREWMATE
+			content.replace("[impostor]", formatPlayer(impostor))
 		}
 
 		await playerChannel.send({

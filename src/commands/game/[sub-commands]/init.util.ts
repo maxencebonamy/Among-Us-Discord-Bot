@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/db"
 import { createRow } from "@/utils/discord/components/row"
-import { colors } from "@/utils/game/colors"
-import type { Game, Player } from "@prisma/client"
+import { shuffle } from "@/utils/function/random/random.util"
+import type { Game } from "@prisma/client"
 import { PlayerRole } from "@prisma/client"
 import type { Collection, GuildMember, ActionRowBuilder, TextChannel, Guild, GuildBasedChannel } from "discord.js"
 import { ChannelType, StringSelectMenuBuilder } from "discord.js"
@@ -36,11 +36,13 @@ export const createPlayersAndChannels = async(
 ): Promise<void> => {
 	let index = 0
 
+	const colors = await prisma.playerColor.findMany()
+	if (!colors) return
+	if (colors.length < selectedMembers.length) return
+	const shuffledColors = shuffle(colors)
+
 	for (const player of selectedMembers) {
-		const color = await prisma.playerColor.findFirst({
-			where: { name: colors[index].name }
-		})
-		if (!color) continue
+		const color = shuffledColors[index]
 
 		const playerChannel = await guild.channels.create({
 			name: `${color.emoji}｜${player.displayName}`,
@@ -71,5 +73,5 @@ export const createPlayersAndChannels = async(
 }
 
 export const drawRandomImpostors = (players: GuildMember[]): GuildMember[] => {
-	return players.sort(() => Math.random() - 0.5).slice(0, 2)
+	return [...players].sort(() => Math.random() - 0.5).slice(0, 2)
 }
