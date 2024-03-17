@@ -1,7 +1,8 @@
 import { prisma } from "@/lib/db"
 import { createRow } from "@/utils/discord/components/row"
 import { shuffle } from "@/utils/function/random/random.util"
-import type { Game } from "@prisma/client"
+import { Color } from "@/utils/game/colors"
+import type { Game, PlayerColor } from "@prisma/client"
 import { PlayerRole } from "@prisma/client"
 import type { Collection, GuildMember, ActionRowBuilder, TextChannel, Guild, GuildBasedChannel } from "discord.js"
 import { ChannelType, StringSelectMenuBuilder } from "discord.js"
@@ -34,29 +35,29 @@ export const createChannel = async(guild: Guild, name: string, categoryId: strin
 export const createPlayersAndChannels = async(
 	game: Game, guild: Guild, category: GuildBasedChannel, selectedMembers: GuildMember[]
 ): Promise<void> => {
-	let index = 0
-
 	const colors = await prisma.playerColor.findMany()
 	if (!colors) return
 	if (colors.length < selectedMembers.length) return
 	const shuffledColors = shuffle(colors)
+	const membersColors = Object.fromEntries(
+		selectedMembers.map((player, index) => [player.id, shuffledColors[index]])
+	)
 
-	for (const player of selectedMembers) {
-		const color = shuffledColors[index]
+	await Promise.all(selectedMembers.map(async(player) => {
+		const color = membersColors[player.id]
 
 		const playerChannel = await guild.channels.create({
 			name: `${color.emoji}｜${player.displayName}`,
 			type: ChannelType.GuildText,
 			parent: category.id
-		})
-		await playerChannel.permissionOverwrites.edit(player.id, {
+		}).then(channel => channel.permissionOverwrites.edit(player.id, {
 			ReadMessageHistory: true,
 			SendMessages: true,
 			ViewChannel: true
-		})
+		}))
 
 		const user = await prisma.user.findUnique({ where: { discordId: player.id } })
-		if (!user) continue
+		if (!user) return
 
 		await prisma.player.createMany({
 			data: {
@@ -67,9 +68,7 @@ export const createPlayersAndChannels = async(
 				colorId: color.id
 			}
 		})
-
-		index++
-	}
+	}))
 }
 
 export const drawRandomImpostors = (players: GuildMember[]): GuildMember[] => {

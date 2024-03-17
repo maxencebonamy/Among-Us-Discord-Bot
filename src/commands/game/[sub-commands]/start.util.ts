@@ -9,7 +9,7 @@ Votre couleur est : **[color]**
 Votre rôle est : 🔪 **Imposteur**
 Votre objectif est d'éliminer tous les membres de l'équipage sans vous faire repérer.
 
-L'autre imposteur est : **[impostor]**
+L'autre imposteur est : [impostor]
 
 Bonne chance !`,
 

@@ -7,6 +7,7 @@ import type { CommandExecute } from "@/utils/handler/command"
 import { ChannelType } from "discord.js"
 import { texts } from "./start.util"
 import { formatPlayer } from "@/utils/game/players"
+import { PlayerRole } from "@prisma/client"
 
 export const execute: CommandExecute = async(command) => {
 	// Vérifier si l'utilisateur est un administrateur
@@ -33,18 +34,21 @@ export const execute: CommandExecute = async(command) => {
 	})
 
 	// Envoyer un message dans chaque salon de joueur
-	const players = await prisma.player.findMany({ where: { gameId: game.id }, include: { user: true, color: true } })
-	for (const player of players) {
+	const players = await prisma.player.findMany({
+		where: { gameId: game.id },
+		include: { user: true, color: true }
+	})
+	await Promise.all(players.map(async(player) => {
 		const playerChannel = await command.guild?.channels.fetch(player.channelId)
-		if (!playerChannel) continue
-		if (playerChannel.type !== ChannelType.GuildText) continue
+		if (!playerChannel) return
+		if (playerChannel.type !== ChannelType.GuildText) return
 
-		const content = texts[player.role].replace("[color]", `${player.color.emoji} ${player.color.name.toUpperCase()}`)
-		if (player.role === "IMPOSTOR") {
-			const impostor = players.find(p => p.id !== player.id && p.role === "IMPOSTOR")
+		let content = texts[player.role].replace("[color]", `${player.color.emoji} ${player.color.name.toUpperCase()}`)
+		if (player.role === PlayerRole.IMPOSTOR) {
+			const impostor = players.find(p => p.id !== player.id && p.role === PlayerRole.IMPOSTOR)
 			console.log(impostor)
-			if (!impostor) continue
-			content.replace("[impostor]", formatPlayer(impostor))
+			if (!impostor) return
+			content = content.replace("[impostor]", formatPlayer(impostor))
 		}
 
 		await playerChannel.send({
@@ -53,7 +57,7 @@ export const execute: CommandExecute = async(command) => {
 				content
 			})]
 		})
-	}
+	}))
 
 	// Répondre
 	await command.reply({

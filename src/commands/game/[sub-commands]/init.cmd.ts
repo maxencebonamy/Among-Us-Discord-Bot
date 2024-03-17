@@ -11,8 +11,7 @@ import { createRow } from "@/utils/discord/components/row"
 import { createButton, createCancelButton, createOkButton } from "@/utils/discord/components/button"
 import { PlayerRole } from "@prisma/client"
 import { log } from "@/utils/discord/channels"
-import { colors } from "@/utils/game/colors"
-import { formatPlayer, formatPlayerWithRole } from "@/utils/game/players"
+import { formatPlayerWithRole } from "@/utils/game/players"
 
 export const execute: CommandExecute = async(command) => {
 	// Vérifier si l'utilisateur est un administrateur
