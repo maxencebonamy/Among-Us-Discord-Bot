@@ -34,14 +34,14 @@ export const execute: CommandExecute = async(command) => {
 	})
 
 	// Envoyer un message dans chaque salon de joueur
+	await command.guild?.channels.fetch()
 	const players = await prisma.player.findMany({
 		where: { gameId: game.id },
 		include: { user: true, color: true }
 	})
 	await Promise.all(players.map(async(player) => {
-		const playerChannel = await command.guild?.channels.fetch(player.channelId)
-		if (!playerChannel) return
-		if (playerChannel.type !== ChannelType.GuildText) return
+		const playerChannel = command.guild?.channels.cache.get(player.channelId)
+		if (!playerChannel || playerChannel.type !== ChannelType.GuildText) return
 
 		let content = texts[player.role].replace("[color]", `${player.color.emoji} ${player.color.name.toUpperCase()}`)
 		if (player.role === PlayerRole.IMPOSTOR) {
@@ -56,6 +56,23 @@ export const execute: CommandExecute = async(command) => {
 				title: "🎮 Début de la partie",
 				content
 			})]
+		})
+
+		// Tasks
+		await prisma.playerTask.findMany(
+			{ where: { playerId: player.id }, include: { task: true } }
+		).then(async(playerTasks) => {
+			await Promise.all(playerTasks.map(async(playerTask) => {
+				const taskChannel = command.guild?.channels.cache.get(playerTask.task.channelId ?? "")
+				if (!taskChannel || taskChannel.type !== ChannelType.GuildText) return
+
+				await playerChannel.send({
+					embeds: [createCustomEmbed({
+						title: `${playerTask.task.emoji} ${playerTask.task.name}`,
+						content: playerTask.task.description
+					})]
+				})
+			}))
 		})
 	}))
 

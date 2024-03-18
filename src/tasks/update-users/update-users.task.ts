@@ -6,7 +6,7 @@ import { logger } from "@/utils/logger"
 
 export const enableInDev = true
 
-export const interval: TaskInterval = "0 * * * * *"
+export const interval: TaskInterval = "0 0 * * * *"
 
 export const execute: TaskExecute = async() => {
 	// Récupérer le serveur principal

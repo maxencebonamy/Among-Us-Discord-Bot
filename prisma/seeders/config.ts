@@ -10,6 +10,14 @@ export const seedConfig = async(prisma: PrismaClient): Promise<void> => {
 			{
 				key: "NB_PLAYERS",
 				value: "10"
+			},
+			{
+				key: "NB_TASKS_EASY",
+				value: "6"
+			},
+			{
+				key: "NB_TASKS_HARD",
+				value: "2"
 			}
 		]
 	})

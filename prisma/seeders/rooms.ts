@@ -1,14 +1,14 @@
 import type { PrismaClient } from "@prisma/client"
 
 const ROOMS = [
-	"Admin",
+	"Hôpital",
 	"Stockage",
 	"Salle hantée",
 	"Centre de contrôle",
 	"Jungle",
-	"Couloir du haut",
-	"Retro Gaming",
-	"Couloir du bas",
+	"Pont supérieur",
+	"Retro",
+	"Pont inférieur",
 	"Bureau",
 	"Salle de jeu",
 	"Réfectoire"

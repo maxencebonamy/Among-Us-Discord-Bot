@@ -1,11 +1,18 @@
 import { prisma } from "@/lib/db"
 import { createRow } from "@/utils/discord/components/row"
-import { shuffle } from "@/utils/function/random/random.util"
-import { Color } from "@/utils/game/colors"
-import type { Game, PlayerColor } from "@prisma/client"
+import { shuffle } from "@/utils/function/random"
+import type { Game } from "@prisma/client"
 import { PlayerRole } from "@prisma/client"
 import type { Collection, GuildMember, ActionRowBuilder, TextChannel, Guild, GuildBasedChannel } from "discord.js"
 import { ChannelType, StringSelectMenuBuilder } from "discord.js"
+
+export const getIntConfig = async(key: string): Promise<number | null> => {
+	const config = await prisma.config.findUnique({ where: { key } })
+	if (!config || !config.value) {
+		return null
+	}
+	return Number.parseInt(config.value)
+}
 
 export const createPlayersSelectMenu = (
 	players: Collection<string, GuildMember>, nbPlayers: number
@@ -72,5 +79,5 @@ export const createPlayersAndChannels = async(
 }
 
 export const drawRandomImpostors = (players: GuildMember[]): GuildMember[] => {
-	return [...players].sort(() => Math.random() - 0.5).slice(0, 2)
+	return shuffle([...players]).slice(0, 2)
 }

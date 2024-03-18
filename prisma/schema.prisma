@@ -28,7 +28,6 @@ enum PlayerRole {
 
 enum TaskLevel {
     EASY
-    MEDIUM
     HARD
 }
 
@@ -98,7 +97,7 @@ model PlayerColor {
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
-    Player    Player[]
+    player    Player[]
 }
 
 model Task {
@@ -107,26 +106,28 @@ model Task {
     description String
     level       TaskLevel
     channelId   String?
+    room        Room      @relation(fields: [roomId], references: [id], onDelete: Cascade)
+    emoji       String
 
     createdAt  DateTime     @default(now())
     updatedAt  DateTime     @updatedAt
     playerTask PlayerTask[]
-    roomTask   RoomTask[]
+    roomId     Int
 }
 
 model Room {
     id        Int     @id @default(autoincrement())
-    name      String
+    name      String  @unique
     channelId String?
 
-    createdAt DateTime   @default(now())
-    updatedAt DateTime   @updatedAt
-    roomTask  RoomTask[]
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+    tasks     Task[]
 }
 
 model PlayerTask {
-    player Player  @relation(fields: [playerId], references: [id])
-    task   Task    @relation(fields: [taskId], references: [id])
+    player Player  @relation(fields: [playerId], references: [id], onDelete: Cascade)
+    task   Task    @relation(fields: [taskId], references: [id], onDelete: Cascade)
     done   Boolean @default(false)
 
     createdAt DateTime @default(now())
@@ -149,8 +150,8 @@ model Cooldown {
 }
 
 model PlayerCooldown {
-    player   Player   @relation(fields: [playerId], references: [id])
-    cooldown Cooldown @relation(fields: [cooldownId], references: [id])
+    player   Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
+    cooldown Cooldown @relation(fields: [cooldownId], references: [id], onDelete: Cascade)
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
@@ -159,17 +160,4 @@ model PlayerCooldown {
     cooldownId Int
 
     @@id([playerId, cooldownId])
-}
-
-model RoomTask {
-    room Room @relation(fields: [roomId], references: [id])
-    task Task @relation(fields: [taskId], references: [id])
-
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
-
-    roomId Int
-    taskId Int
-
-    @@id([roomId, taskId])
 }

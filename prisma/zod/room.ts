@@ -1,6 +1,6 @@
 import * as z from "zod"
 import * as imports from "../null"
-import { CompleteRoomTask, RelatedRoomTaskSchema } from "./index"
+import { CompleteTask, RelatedTaskSchema } from "./index"
 
 export const RoomSchema = z.object({
   id: z.number().int(),
@@ -11,7 +11,7 @@ export const RoomSchema = z.object({
 })
 
 export interface CompleteRoom extends z.infer<typeof RoomSchema> {
-  roomTask: CompleteRoomTask[]
+  tasks: CompleteTask[]
 }
 
 /**
@@ -20,5 +20,5 @@ export interface CompleteRoom extends z.infer<typeof RoomSchema> {
  * NOTE: Lazy required in case of potential circular dependencies within schema
  */
 export const RelatedRoomSchema: z.ZodSchema<CompleteRoom> = z.lazy(() => RoomSchema.extend({
-  roomTask: RelatedRoomTaskSchema.array(),
+  tasks: RelatedTaskSchema.array(),
 }))

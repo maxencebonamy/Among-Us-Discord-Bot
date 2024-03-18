@@ -4,16 +4,18 @@ import { createCustomEmbed } from "@/utils/discord/components/embed"
 import { getGuildMembers } from "@/utils/discord/guild"
 import { isAdmin } from "@/utils/discord/roles"
 import type { CommandExecute } from "@/utils/handler/command"
-import { createPlayersAndChannels, createPlayersSelectMenu, drawRandomImpostors } from "./init.util"
+import { createPlayersAndChannels, createPlayersSelectMenu, drawRandomImpostors, getIntConfig } from "./init.util"
 import { editReplyEmbed, getCommandUser, replyError } from "@/utils/discord/command"
 import { ButtonStyle, ChannelType, type GuildMember, type StringSelectMenuInteraction } from "discord.js"
 import { createRow } from "@/utils/discord/components/row"
 import { createButton, createCancelButton, createOkButton } from "@/utils/discord/components/button"
-import { PlayerRole } from "@prisma/client"
+import { PlayerRole, TaskLevel } from "@prisma/client"
 import { log } from "@/utils/discord/channels"
-import { formatPlayerWithRole } from "@/utils/game/players"
+import { formatPlayer, formatPlayerWithRole } from "@/utils/game/players"
+import { shuffle } from "@/utils/function/random"
 
 export const execute: CommandExecute = async(command) => {
+	// await command.deferReply()
 	// Vérifier si l'utilisateur est un administrateur
 	if (!await isAdmin(command.member)) {
 		await replyError(command, "Vous n'avez pas la permission d'utiliser cette commande.")
@@ -36,19 +38,32 @@ export const execute: CommandExecute = async(command) => {
 	}
 
 	// Récupérer le channel admin
-	const adminChannel = await guild.channels.fetch(guilds.main.channels.admins)
+	const adminChannel = guild.channels.cache.get(guilds.main.channels.admins)
 	if (!adminChannel || adminChannel.type !== ChannelType.GuildText) {
 		await replyError(command, "Le channel admin n'a pas été trouvé.")
 		return
 	}
 
 	// Récupérer la variables de configuration pour le nombre de joueurs
-	const nbPlayersConfig = await prisma.config.findUnique({ where: { key: "NB_PLAYERS" } })
-	if (!nbPlayersConfig || !nbPlayersConfig.value) {
+	const nbPlayers = await getIntConfig("NB_PLAYERS")
+	if (!nbPlayers) {
 		await replyError(command, "La variable de configuration \"NB_PLAYERS\" n'a pas été trouvée.")
 		return
 	}
-	const nbPlayers = Number.parseInt(nbPlayersConfig.value)
+
+	// Récupérer la variables de configuration pour le nombre de tasks faciles
+	const nbTasksEasy = await getIntConfig("NB_TASKS_EASY")
+	if (!nbTasksEasy) {
+		await replyError(command, "La variable de configuration \"NB_TASKS_EASY\" n'a pas été trouvée.")
+		return
+	}
+
+	// Récupérer la variables de configuration pour le nombre de tasks difficiles
+	const nbTasksHard = await getIntConfig("NB_TASKS_HARD")
+	if (!nbTasksHard) {
+		await replyError(command, "La variable de configuration \"NB_TASKS_HARD\" n'a pas été trouvée.")
+		return
+	}
 
 	// Vérifier si le nombre de joueurs est suffisant
 	if (playerMembers.size < nbPlayers) {
@@ -145,7 +160,7 @@ export const execute: CommandExecute = async(command) => {
 			}
 		})
 	}
-	for (const impostor of impostors) {
+	await Promise.all(impostors.map(async impostor => {
 		const user = await prisma.user.findUnique({ where: { discordId: impostor.id } })
 		if (!user) return
 
@@ -156,7 +171,42 @@ export const execute: CommandExecute = async(command) => {
 			where: { id: player.id },
 			data: { role: PlayerRole.IMPOSTOR }
 		})
-	}
+	}))
+
+	// Attribution des tasks
+	const players = await prisma.player.findMany({ where: { gameId: game.id }, include: { user: true, color: true } })
+	const tasks = await prisma.task.findMany({})
+	await guild.channels.fetch()
+	await Promise.all(players.map(async player => {
+		let tasksToAssign = []
+		if (player.role === PlayerRole.IMPOSTOR) {
+			tasksToAssign = [...tasks]
+		} else {
+			const tasksEasy = shuffle(tasks.filter(task => task.level === TaskLevel.EASY))
+			const tasksHard = shuffle(tasks.filter(task => task.level === TaskLevel.HARD))
+			tasksToAssign = [...tasksEasy.slice(0, nbTasksEasy), ...tasksHard.slice(0, nbTasksHard)]
+		}
+
+		await Promise.all(tasksToAssign.map(async task => {
+			await prisma.playerTask.create({
+				data: {
+					playerId: player.id,
+					taskId: task.id
+				}
+			})
+
+			const channel = guild.channels.cache.get(task.channelId ?? "")
+			if (!channel || channel.type !== ChannelType.GuildText) return
+
+			await channel.send({
+				embeds: [createCustomEmbed({
+					title: formatPlayer(player),
+					content: " "
+				})],
+				components: [createRow(createOkButton())]
+			})
+		}))
+	}))
 
 	// Réponse
 	await command.editReply({
@@ -172,7 +222,6 @@ export const execute: CommandExecute = async(command) => {
 	await log("🎮 Création d'une partie", `La partie #${game.id} a été créée par ${commandUser?.name ?? "?"}.`)
 
 	// Message admin
-	const players = await prisma.player.findMany({ where: { gameId: game.id }, include: { user: true, color: true } })
 	const content = `Les joueurs sélectionnés sont :\n${
 		players.map(player => `- ${formatPlayerWithRole(player)}`).join("\n")
 	}`

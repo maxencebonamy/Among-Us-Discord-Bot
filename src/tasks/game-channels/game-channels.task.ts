@@ -16,10 +16,7 @@ export const execute: TaskExecute = async() => {
 
 	// Récupérer la partie actuellement en attente ou en cours
 	const game = await prisma.game.findFirst({ where: { status: { in: ["WAITING", "RUNNING", "PAUSED"] } } })
-	if (!game) {
-		console.log("Aucune partie en attente ou en cours.")
-		return
-	}
+	if (!game) return
 
 	// Récupérer les joueurs
 	const players = await prisma.player.findMany({

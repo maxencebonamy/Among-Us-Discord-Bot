@@ -12,7 +12,7 @@ export const PlayerColorSchema = z.object({
 })
 
 export interface CompletePlayerColor extends z.infer<typeof PlayerColorSchema> {
-  Player: CompletePlayer[]
+  player: CompletePlayer[]
 }
 
 /**
@@ -21,5 +21,5 @@ export interface CompletePlayerColor extends z.infer<typeof PlayerColorSchema> {
  * NOTE: Lazy required in case of potential circular dependencies within schema
  */
 export const RelatedPlayerColorSchema: z.ZodSchema<CompletePlayerColor> = z.lazy(() => PlayerColorSchema.extend({
-  Player: RelatedPlayerSchema.array(),
+  player: RelatedPlayerSchema.array(),
 }))

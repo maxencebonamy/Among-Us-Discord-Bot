@@ -16,7 +16,8 @@ export const execute: TaskExecute = async() => {
 	const guild = await getGuild(client, "main")
 
 	// Récupérer le channel des vitals
-	const channel = await guild.channels.fetch(guilds.main.channels.vitals)
+	await guild.channels.fetch()
+	const channel = guild.channels.cache.find(channel => channel.id === guilds.main.channels.vitals)
 	if (!channel) {
 		console.error("Le channel des vitals n'existe pas.")
 		return

@@ -19,6 +19,8 @@ export const execute: CommandExecute = async(command) => {
 		})
 	})
 
+	console.log(response)
+
 	// Répondre avec la liste des salons
 	await command.reply({
 		embeds: [createCustomEmbed({
