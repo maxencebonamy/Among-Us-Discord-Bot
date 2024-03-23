@@ -68,13 +68,14 @@ model User {
 }
 
 model Player {
-    id        Int         @id @default(autoincrement())
-    user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-    role      PlayerRole
-    alive     Boolean     @default(true)
-    game      Game        @relation(fields: [gameId], references: [id], onDelete: Cascade)
-    channelId String
-    color     PlayerColor @relation(fields: [colorId], references: [id], onDelete: Cascade)
+    id                   Int         @id @default(autoincrement())
+    user                 User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+    role                 PlayerRole
+    alive                Boolean     @default(true)
+    game                 Game        @relation(fields: [gameId], references: [id], onDelete: Cascade)
+    channelId            String
+    color                PlayerColor @relation(fields: [colorId], references: [id], onDelete: Cascade)
+    progressionMessageId String?
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt

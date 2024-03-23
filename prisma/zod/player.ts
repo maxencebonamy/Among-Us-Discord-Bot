@@ -8,6 +8,7 @@ export const PlayerSchema = z.object({
   role: z.nativeEnum(PlayerRole),
   alive: z.boolean(),
   channelId: z.string(),
+  progressionMessageId: z.string().nullish(),
   createdAt: z.date(),
   updatedAt: z.date(),
   userId: z.number().int(),

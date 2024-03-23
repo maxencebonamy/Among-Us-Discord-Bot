@@ -21,3 +21,8 @@ export const slashCommand: SlashCommandDefition = new SlashCommandBuilder()
 	.addSubcommand(subCommand => subCommand
 		.setName("roles")
 		.setDescription("Afficher la liste des rôles"))
+
+	// progression
+	.addSubcommand(subCommand => subCommand
+		.setName("progression")
+		.setDescription("Afficher la progression de la partie"))

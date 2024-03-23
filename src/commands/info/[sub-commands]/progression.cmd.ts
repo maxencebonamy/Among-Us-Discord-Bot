@@ -1,8 +1,16 @@
 import { prisma } from "@/lib/db"
+import { replyError } from "@/utils/discord/command"
 import { createCustomEmbed } from "@/utils/discord/components/embed"
+import { isAdmin } from "@/utils/discord/roles"
 import type { CommandExecute } from "@/utils/handler/command"
 
 export const execute: CommandExecute = async(command) => {
+	// Vérifier si l'utilisateur est un administrateur
+	if (!await isAdmin(command.member)) {
+		await replyError(command, "Vous n'avez pas la permission d'utiliser cette commande.")
+		return
+	}
+
 	// Récupérer la partie en cours
 	const game = await prisma.game.findFirst({ where: { status: { in: ["RUNNING"] } } })
 	if (!game) {
@@ -27,7 +35,7 @@ export const execute: CommandExecute = async(command) => {
 	// Envoyer le message
 	await command.reply({
 		embeds: [createCustomEmbed({
-			title: "Progression de la partie",
+			title: "📈 Progression de la partie",
 			content: `**${nbTasksDone}/${nbTasks}** tasks réalisées\n${progressBar}`
 		})],
 		ephemeral: true

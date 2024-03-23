@@ -22,6 +22,12 @@ export const execute: CommandExecute = async(command) => {
 		await replyError(command, "Aucune partie en cours.")
 		return
 	}
+
+	// Vérifier si un vote est en cours
+	if (await prisma.vote.findFirst({ where: { game, finished: false } })) {
+		await replyError(command, "Il y a déjà un vote en cours.")
+		return
+	}
 	await command.deferReply({ ephemeral: true })
 
 	// Récupérer les joueurs

@@ -4,13 +4,10 @@ import { replyError } from "@/utils/discord/command"
 import { createCustomEmbed } from "@/utils/discord/components/embed"
 import { isAdmin } from "@/utils/discord/roles"
 import type { CommandExecute } from "@/utils/handler/command"
-import { ButtonStyle, ChannelType } from "discord.js"
+import { ChannelType } from "discord.js"
 import { getIntConfig, texts } from "./start.util"
 import { formatPlayer } from "@/utils/game/players"
-import { PlayerRole, TaskLevel } from "@prisma/client"
-import { shuffle } from "@/utils/function/random"
-import { createRow } from "@/utils/discord/components/row"
-import { createButton } from "@/utils/discord/components/button"
+import { PlayerRole } from "@prisma/client"
 
 export const execute: CommandExecute = async(command) => {
 	// Vérifier si l'utilisateur est un administrateur
@@ -57,47 +54,11 @@ export const execute: CommandExecute = async(command) => {
 		where: { gameId: game.id },
 		include: { user: true, color: true }
 	})
-	const tasks = await prisma.task.findMany({})
-	await command.guild?.channels.fetch()
-	await Promise.all(players.map(async player => {
-		let tasksToAssign = []
-		if (player.role === PlayerRole.IMPOSTOR) {
-			tasksToAssign = [...tasks]
-		} else {
-			const tasksEasy = shuffle(tasks.filter(task => task.level === TaskLevel.EASY))
-			const tasksHard = shuffle(tasks.filter(task => task.level === TaskLevel.HARD))
-			tasksToAssign = [...tasksEasy.slice(0, nbTasksEasy), ...tasksHard.slice(0, nbTasksHard)]
-		}
-
-		await Promise.all(tasksToAssign.map(async task => {
-			const channel = command.guild?.channels.cache.get(task.channelId ?? "")
-			if (!channel || channel.type !== ChannelType.GuildText) return
-
-			const message = await channel.send({
-				embeds: [createCustomEmbed({
-					title: formatPlayer(player),
-					content: ""
-				})],
-				components: [createRow(createButton({
-					id: JSON.stringify({ type: "completeTask", playerId: player.id, taskId: task.id }),
-					label: "OK",
-					style: ButtonStyle.Success
-				}))]
-			})
-			await prisma.playerTask.create({
-				data: {
-					playerId: player.id,
-					taskId: task.id,
-					modoMessageId: message.id
-				}
-			})
-		}))
-	}))
+	const allPlayerTasks = await prisma.playerTask.findMany({ include: { task: true } })
 
 	// Envoyer un message dans chaque salon de joueur
-	await command.guild?.channels.fetch()
 	await Promise.all(players.map(async(player) => {
-		const playerChannel = command.guild?.channels.cache.get(player.channelId)
+		const playerChannel = await command.guild?.channels.fetch(player.channelId)
 		if (!playerChannel || playerChannel.type !== ChannelType.GuildText) return
 
 		let content = texts[player.role].replace("[color]", `${player.color.emoji} ${player.color.name.toUpperCase()}`)
@@ -112,34 +73,39 @@ export const execute: CommandExecute = async(command) => {
 				title: "🎮 Début de la partie",
 				content
 			})]
+		}).then(async message => message.pin())
+
+		const progressionMessage = await playerChannel.send({
+			embeds: [createCustomEmbed({
+				title: "📈 Progression de la partie",
+				content: "0/0 tasks réalisées\n⬛⬛⬛⬛⬛⬛⬛⬛⬛⬛ **0%**"
+			})]
+		})
+		await prisma.player.update({
+			where: { id: player.id },
+			data: { progressionMessageId: progressionMessage.id }
 		})
 
 		// Tasks
-		await prisma.playerTask.findMany(
-			{ where: { playerId: player.id }, include: { task: true } }
-		).then(async(playerTasks) => {
-			await Promise.all(playerTasks.map(async(playerTask) => {
-				const taskChannel = command.guild?.channels.cache.get(playerTask.task.channelId ?? "")
-				if (!taskChannel || taskChannel.type !== ChannelType.GuildText) return
-
-				const message = await playerChannel.send({
-					embeds: [createCustomEmbed({
-						title: `${playerTask.task.emoji} ${playerTask.task.name}`,
-						content: playerTask.task.description
-					})]
-				})
-				await prisma.playerTask.update({
-					where: {
-						// eslint-disable-next-line camelcase
-						playerId_taskId: {
-							playerId: player.id,
-							taskId: playerTask.taskId
-						}
-					},
-					data: { playerMessageId: message.id }
-				})
-			}))
-		})
+		const playerTasks = allPlayerTasks.filter(task => task.playerId === player.id)
+		await Promise.all(playerTasks.map(async(playerTask) => {
+			const message = await playerChannel.send({
+				embeds: [createCustomEmbed({
+					title: `${playerTask.task.emoji} ${playerTask.task.name}`,
+					content: playerTask.task.description
+				})]
+			})
+			await prisma.playerTask.update({
+				where: {
+					// eslint-disable-next-line camelcase
+					playerId_taskId: {
+						playerId: player.id,
+						taskId: playerTask.taskId
+					}
+				},
+				data: { playerMessageId: message.id }
+			})
+		}))
 	}))
 
 	// Répondre

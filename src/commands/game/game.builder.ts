@@ -12,10 +12,15 @@ export const slashCommand: SlashCommandDefition = new SlashCommandBuilder()
 		.setName("init")
 		.setDescription("Initialiser une partie"))
 
+	// prepare
+	.addSubcommand(subCommand => subCommand
+		.setName("prepare")
+		.setDescription("Préparer une partie (après l'avoir initialisée)"))
+
 	// start
 	.addSubcommand(subCommand => subCommand
 		.setName("start")
-		.setDescription("Lancer une partie"))
+		.setDescription("Lancer une partie (après l'avoir préparée)"))
 
 	// cancel
 	.addSubcommand(subCommand => subCommand
