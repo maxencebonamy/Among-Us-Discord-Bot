@@ -1,6 +1,6 @@
 import { client } from "@/client"
 import { getGuild, guilds } from "@/configs/guild"
-import { prisma } from "@/lib/db"
+import { prisma, prismaConnected } from "@/lib/db"
 import { log } from "@/utils/discord/channels"
 import type { TaskExecute, TaskInterval } from "@/utils/handler/task"
 import { logger } from "@/utils/logger"
@@ -8,11 +8,17 @@ import { ChannelType } from "discord.js"
 
 export const enableInDev = true
 
-export const interval: TaskInterval = "0 * * * * *"
+export const interval: TaskInterval = "0 0 * * * *"
 
 export const execute: TaskExecute = async() => {
 	// Récupérer le serveur principal
 	const guild = await getGuild(client, "main")
+
+	// Vérifier si la base de données est connectée
+	if (!await prismaConnected()) {
+		logger.error("La base de données n'est pas connectée.")
+		return
+	}
 
 	// Récupérer la partie actuellement en attente ou en cours
 	const game = await prisma.game.findFirst({ where: { status: { in: ["WAITING", "RUNNING", "PAUSED"] } } })
@@ -27,7 +33,7 @@ export const execute: TaskExecute = async() => {
 	// Récupérer la catégorie des joueurs
 	const playersCategory = guild.channels.cache.get(guilds.main.channels.playersCategory)
 	if (!playersCategory) {
-		console.log("La catégorie des joueurs n'a pas été trouvée.")
+		logger.error("La catégorie des joueurs n'a pas été trouvée.")
 		return
 	}
 
@@ -59,7 +65,7 @@ export const execute: TaskExecute = async() => {
 
 		// Si le salon n'est pas un salon texte, on ne fait rien
 		if (playerChannel.type !== ChannelType.GuildText) {
-			console.log(`Le salon de ${player.user.name} n'est pas un salon texte.`)
+			logger.error(`Le salon de ${player.user.name} n'est pas un salon texte.`)
 			return
 		}
 

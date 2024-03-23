@@ -9,13 +9,11 @@ import { editReplyEmbed, getCommandUser, replyError } from "@/utils/discord/comm
 import { ButtonStyle, ChannelType, type GuildMember, type StringSelectMenuInteraction } from "discord.js"
 import { createRow } from "@/utils/discord/components/row"
 import { createButton, createCancelButton, createOkButton } from "@/utils/discord/components/button"
-import { PlayerRole, TaskLevel } from "@prisma/client"
+import { PlayerRole } from "@prisma/client"
 import { log } from "@/utils/discord/channels"
-import { formatPlayer, formatPlayerWithRole } from "@/utils/game/players"
-import { shuffle } from "@/utils/function/random"
+import { formatPlayerWithRole } from "@/utils/game/players"
 
 export const execute: CommandExecute = async(command) => {
-	// await command.deferReply()
 	// Vérifier si l'utilisateur est un administrateur
 	if (!await isAdmin(command.member)) {
 		await replyError(command, "Vous n'avez pas la permission d'utiliser cette commande.")
@@ -48,20 +46,6 @@ export const execute: CommandExecute = async(command) => {
 	const nbPlayers = await getIntConfig("NB_PLAYERS")
 	if (!nbPlayers) {
 		await replyError(command, "La variable de configuration \"NB_PLAYERS\" n'a pas été trouvée.")
-		return
-	}
-
-	// Récupérer la variables de configuration pour le nombre de tasks faciles
-	const nbTasksEasy = await getIntConfig("NB_TASKS_EASY")
-	if (!nbTasksEasy) {
-		await replyError(command, "La variable de configuration \"NB_TASKS_EASY\" n'a pas été trouvée.")
-		return
-	}
-
-	// Récupérer la variables de configuration pour le nombre de tasks difficiles
-	const nbTasksHard = await getIntConfig("NB_TASKS_HARD")
-	if (!nbTasksHard) {
-		await replyError(command, "La variable de configuration \"NB_TASKS_HARD\" n'a pas été trouvée.")
 		return
 	}
 
@@ -173,41 +157,6 @@ export const execute: CommandExecute = async(command) => {
 		})
 	}))
 
-	// Attribution des tasks
-	const players = await prisma.player.findMany({ where: { gameId: game.id }, include: { user: true, color: true } })
-	const tasks = await prisma.task.findMany({})
-	await guild.channels.fetch()
-	await Promise.all(players.map(async player => {
-		let tasksToAssign = []
-		if (player.role === PlayerRole.IMPOSTOR) {
-			tasksToAssign = [...tasks]
-		} else {
-			const tasksEasy = shuffle(tasks.filter(task => task.level === TaskLevel.EASY))
-			const tasksHard = shuffle(tasks.filter(task => task.level === TaskLevel.HARD))
-			tasksToAssign = [...tasksEasy.slice(0, nbTasksEasy), ...tasksHard.slice(0, nbTasksHard)]
-		}
-
-		await Promise.all(tasksToAssign.map(async task => {
-			await prisma.playerTask.create({
-				data: {
-					playerId: player.id,
-					taskId: task.id
-				}
-			})
-
-			const channel = guild.channels.cache.get(task.channelId ?? "")
-			if (!channel || channel.type !== ChannelType.GuildText) return
-
-			await channel.send({
-				embeds: [createCustomEmbed({
-					title: formatPlayer(player),
-					content: " "
-				})],
-				components: [createRow(createOkButton())]
-			})
-		}))
-	}))
-
 	// Réponse
 	await command.editReply({
 		embeds: [createCustomEmbed({
@@ -222,10 +171,13 @@ export const execute: CommandExecute = async(command) => {
 	await log("🎮 Création d'une partie", `La partie #${game.id} a été créée par ${commandUser?.name ?? "?"}.`)
 
 	// Message admin
+	const players = await prisma.player.findMany({
+		where: { gameId: game.id },
+		include: { user: true, color: true }
+	})
 	const content = `Les joueurs sélectionnés sont :\n${
 		players.map(player => `- ${formatPlayerWithRole(player)}`).join("\n")
 	}`
-
 	await adminChannel.send({
 		embeds: [createCustomEmbed({
 			title: "🎮 Une partie a été créée",

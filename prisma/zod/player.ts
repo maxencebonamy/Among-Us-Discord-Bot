@@ -1,7 +1,7 @@
 import * as z from "zod"
 import * as imports from "../null"
 import { PlayerRole } from "@prisma/client"
-import { CompleteUser, RelatedUserSchema, CompleteGame, RelatedGameSchema, CompletePlayerColor, RelatedPlayerColorSchema, CompletePlayerTask, RelatedPlayerTaskSchema, CompletePlayerCooldown, RelatedPlayerCooldownSchema } from "./index"
+import { CompleteUser, RelatedUserSchema, CompleteGame, RelatedGameSchema, CompletePlayerColor, RelatedPlayerColorSchema, CompletePlayerTask, RelatedPlayerTaskSchema, CompletePlayerVote, RelatedPlayerVoteSchema, CompleteVote, RelatedVoteSchema } from "./index"
 
 export const PlayerSchema = z.object({
   id: z.number().int(),
@@ -20,7 +20,9 @@ export interface CompletePlayer extends z.infer<typeof PlayerSchema> {
   game: CompleteGame
   color: CompletePlayerColor
   playerTask: CompletePlayerTask[]
-  playerCooldown: CompletePlayerCooldown[]
+  voteTargets: CompletePlayerVote[]
+  voteAuthors: CompletePlayerVote[]
+  votes: CompleteVote[]
 }
 
 /**
@@ -33,5 +35,7 @@ export const RelatedPlayerSchema: z.ZodSchema<CompletePlayer> = z.lazy(() => Pla
   game: RelatedGameSchema,
   color: RelatedPlayerColorSchema,
   playerTask: RelatedPlayerTaskSchema.array(),
-  playerCooldown: RelatedPlayerCooldownSchema.array(),
+  voteTargets: RelatedPlayerVoteSchema.array(),
+  voteAuthors: RelatedPlayerVoteSchema.array(),
+  votes: RelatedVoteSchema.array(),
 }))

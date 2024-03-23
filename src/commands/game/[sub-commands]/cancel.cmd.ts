@@ -1,3 +1,4 @@
+import { guilds } from "@/configs/guild"
 import { prisma } from "@/lib/db"
 import { log } from "@/utils/discord/channels"
 import { replyError } from "@/utils/discord/command"
@@ -6,6 +7,7 @@ import { createCustomEmbed } from "@/utils/discord/components/embed"
 import { createRow } from "@/utils/discord/components/row"
 import { isAdmin } from "@/utils/discord/roles"
 import type { CommandExecute } from "@/utils/handler/command"
+import { ChannelType } from "discord.js"
 
 export const execute: CommandExecute = async(command) => {
 	// Vérifier si l'utilisateur est un administrateur
@@ -52,30 +54,27 @@ export const execute: CommandExecute = async(command) => {
 
 	// Supprimer les channels des joueurs
 	const players = await prisma.player.findMany({ where: { game } })
-	const channels = await command.guild?.channels.fetch()
-	for (const player of players) {
-		const channel = channels?.find(channel => channel && channel.id === player.channelId)
+	await Promise.all(players.map(async(player) => {
+		const channel = await command.guild?.channels.fetch(player.channelId).catch(() => null)
 		if (channel) await channel.delete()
-	}
+	}))
 
 	// Annuler la partie
 	await prisma.game.update({
-		where: {
-			id: game.id
-		},
-		data: {
-			status: "CANCELED"
-		}
-	})
-	await command.editReply({
-		embeds: [createCustomEmbed({
-			title: "🎮 Partie annulée",
-			content: "La partie a été annulée."
-		})],
-		components: []
+		where: { id: game.id },
+		data: { status: "CANCELED" }
 	})
 
 	// Log
 	const commandUser = await prisma.user.findUnique({ where: { discordId: command.user.id } })
 	await log("🎮 Partie annulée", `La partie #${game.id} a été annulée par ${commandUser?.name ?? "?"}.`)
+
+	// Réponse
+	await command.editReply({
+		embeds: [createCustomEmbed({
+			title: "🎮 Partie annulée",
+			content: "La partie a été annulée.\nFaire `/update tasks` pour mettre à jour les salons des tasks."
+		})],
+		components: []
+	})
 }

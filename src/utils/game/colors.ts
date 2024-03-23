@@ -1,5 +1,5 @@
 export type Color = {
-	name: "Rouge" | "Bleu foncé" | "Vert foncé" | "Jaune" | "Rose" | "Orange" | "Noir" | "Blanc" | "Violet" | "Marron" | "Vert clair" | "Bleu clair"
+	name: "Rouge" | "Bleu" | "Vert foncé" | "Jaune" | "Rose" | "Orange" | "Noir" | "Blanc" | "Violet" | "Marron" | "Vert clair" | "Cyan"
 	hex: `#${string}`
 	emoji: string
 }
@@ -11,7 +11,7 @@ export const colors: Color[] = [
 		emoji: "🔴"
 	},
 	{
-		name: "Bleu foncé",
+		name: "Bleu",
 		hex: "#032467",
 		emoji: "🔵"
 	},
@@ -61,7 +61,7 @@ export const colors: Color[] = [
 		emoji: "🟢"
 	},
 	{
-		name: "Bleu clair",
+		name: "Cyan",
 		hex: "#18aad9",
 		emoji: "🔵"
 	}

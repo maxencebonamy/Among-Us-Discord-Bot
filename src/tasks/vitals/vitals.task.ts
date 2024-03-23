@@ -1,10 +1,11 @@
 import { client } from "@/client"
 import { getGuild, guilds } from "@/configs/guild"
-import { prisma } from "@/lib/db"
+import { prisma, prismaConnected } from "@/lib/db"
 import { createEmbed } from "@/utils/discord/components/embed"
 import { getColor } from "@/utils/game/colors"
 import { formatPlayer } from "@/utils/game/players"
 import type { TaskExecute, TaskInterval } from "@/utils/handler/task"
+import { logger } from "@/utils/logger"
 import { ChannelType } from "discord.js"
 
 export const enableInDev = true
@@ -19,11 +20,17 @@ export const execute: TaskExecute = async() => {
 	await guild.channels.fetch()
 	const channel = guild.channels.cache.find(channel => channel.id === guilds.main.channels.vitals)
 	if (!channel) {
-		console.error("Le channel des vitals n'existe pas.")
+		logger.error("Le channel des vitals n'existe pas.")
 		return
 	}
 	if (channel.type !== ChannelType.GuildText) {
-		console.error("Le channel des vitals n'est pas un salon textuel.")
+		logger.error("Le channel des vitals n'est pas un salon textuel.")
+		return
+	}
+
+	// Vérifier si la base de données est connectée
+	if (!await prismaConnected()) {
+		logger.error("La base de données n'est pas connectée.")
 		return
 	}
 
@@ -36,9 +43,9 @@ export const execute: TaskExecute = async() => {
 	if (!game) {
 		// Supprimer tous les messages des vitals
 		const messages = await channel.messages.fetch()
-		for (const message of messages.values()) {
-			await message.delete()
-		}
+		await Promise.all(messages.map(async message => {
+			await message.delete().catch(() => null)
+		}))
 		return
 	}
 
@@ -53,7 +60,7 @@ export const execute: TaskExecute = async() => {
 		}
 	})
 	if (!players) {
-		console.error("Aucun joueur n'est enregistré.")
+		logger.error("Aucun joueur n'est enregistré.")
 		return
 	}
 
@@ -65,8 +72,15 @@ export const execute: TaskExecute = async() => {
 	}))
 
 	// Message
-	const lastMessage = await channel.messages.fetch().then(messages => messages.filter(message => message.author.bot).last())
+	const messages = await channel.messages.fetch()
+	const lastMessage = messages.filter(message => message.author.bot).last()
 	if (lastMessage) {
+		await Promise.all(
+			messages.map(async message => {
+				if (message.id === lastMessage.id) return
+				await message.delete().catch(() => null)
+			})
+		)
 		await lastMessage.edit({ embeds })
 		return
 	}

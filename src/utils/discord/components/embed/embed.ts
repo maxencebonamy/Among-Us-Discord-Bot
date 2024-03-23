@@ -10,7 +10,7 @@ export const simpleEmbed = (message: string, type: EmbedType = "normal", title?:
 	const color = type === "normal" ? global.colors.primary : global.colors.error
 	embed.setColor(color)
 
-	if (message) embed.setDescription(message)
+	if (message) embed.setDescription(message === "" ? " " : message)
 	if (title) embed.setTitle(title)
 
 	return embed
@@ -19,7 +19,7 @@ export const simpleEmbed = (message: string, type: EmbedType = "normal", title?:
 export const createEmbed = ({ title, content, color }: EmbedArgs): EmbedBuilder => {
 	return new EmbedBuilder()
 		.setTitle(title)
-		.setDescription(content)
+		.setDescription(content === "" ? " " : content)
 		.setColor(color)
 }
 

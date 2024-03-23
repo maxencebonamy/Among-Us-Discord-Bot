@@ -47,13 +47,13 @@ const TASKS: TaskData[] = [
 		room: "Pont supérieur",
 		emoji: "💰"
 	},
-	// {
-	// 	name: "Space Invaders",
-	// 	description: "Le joueur doit atteindre X en score au jeu.",
-	// 	level: "EASY",
-	// 	room: "Retro",
-	// 	emoji: "👾"
-	// },
+	{
+		name: "Space Invaders",
+		description: "Le joueur doit atteindre X en score au jeu.",
+		level: "EASY",
+		room: "Retro",
+		emoji: "👾"
+	},
 	{
 		name: "Câbles",
 		description: "Le joueur passe derrière la borne d'arcade et doit rebrancher les câbles. Le modo valide le branchement.",
@@ -118,7 +118,7 @@ const TASKS: TaskData[] = [
 		emoji: "🍺"
 	},
 	{
-		name: "Cuisine",
+		name: "Recettes de cuisine",
 		description: "Le joueur doit réaliser une recette de cuisine, le modo valide la recette.",
 		level: "HARD",
 		room: "Réfectoire",

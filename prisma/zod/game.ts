@@ -1,7 +1,7 @@
 import * as z from "zod"
 import * as imports from "../null"
 import { GameStatus } from "@prisma/client"
-import { CompletePlayer, RelatedPlayerSchema } from "./index"
+import { CompletePlayer, RelatedPlayerSchema, CompleteVote, RelatedVoteSchema } from "./index"
 
 export const GameSchema = z.object({
   id: z.number().int(),
@@ -12,6 +12,7 @@ export const GameSchema = z.object({
 
 export interface CompleteGame extends z.infer<typeof GameSchema> {
   players: CompletePlayer[]
+  vote: CompleteVote[]
 }
 
 /**
@@ -21,4 +22,5 @@ export interface CompleteGame extends z.infer<typeof GameSchema> {
  */
 export const RelatedGameSchema: z.ZodSchema<CompleteGame> = z.lazy(() => GameSchema.extend({
   players: RelatedPlayerSchema.array(),
+  vote: RelatedVoteSchema.array(),
 }))

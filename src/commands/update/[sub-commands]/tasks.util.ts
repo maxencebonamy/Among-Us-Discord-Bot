@@ -52,8 +52,8 @@ export const checkTaskChannels = async(guild: Guild, tasks: (Task & { room: Room
 		if (task.channelId) {
 			const channel = guild.channels.cache.get(task.channelId)
 			if (channel) {
-				if (channel.parentId !== expectedParent)  await channel.edit({ parent: expectedParent })
-				if (channel.name !== expectedName)  await channel.edit({ name: expectedName })
+				if (channel.parentId !== expectedParent) await channel.edit({ parent: expectedParent })
+				if (channel.name !== expectedName) await channel.edit({ name: expectedName })
 				await channel.edit({ permissionOverwrites: expectedPermissions })
 				return
 			}

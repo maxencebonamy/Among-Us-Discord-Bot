@@ -1,16 +1,31 @@
 import { client } from "@/client"
 import { getGuild } from "@/configs/guild"
-import { prisma } from "@/lib/db"
-import type { TaskExecute, TaskInterval } from "@/utils/handler/task"
+import { prisma, prismaConnected } from "@/lib/db"
+import { replyError } from "@/utils/discord/command"
+import { createSuccessEmbed } from "@/utils/discord/components/embed"
+import { isAdmin } from "@/utils/discord/roles"
+import type { CommandExecute } from "@/utils/handler/command"
 import { logger } from "@/utils/logger"
 
-export const enableInDev = true
+export const execute: CommandExecute = async(command) => {
+	// Vérifier si l'utilisateur est un administrateur
+	if (!await isAdmin(command.member)) {
+		await replyError(command, "Vous n'avez pas la permission d'utiliser cette commande.")
+		return
+	}
 
-export const interval: TaskInterval = "0 0 * * * *"
+	// Indiquer que la réponse est en cours
+	await command.deferReply({ ephemeral: true })
 
-export const execute: TaskExecute = async() => {
+	// Vérifier si la base de données est connectée
+	if (!await prismaConnected()) {
+		await replyError(command, "La base de données n'est pas connectée.")
+		return
+	}
+
 	// Récupérer le serveur principal
 	const guild = await getGuild(client, "main")
+	await guild.members.fetch()
 
 	// Récupérer les membres du serveur qui ne sont pas des bots
 	const members = await guild.members.fetch().then(members => members
@@ -23,18 +38,6 @@ export const execute: TaskExecute = async() => {
 
 	// Récupérer les utilisateurs enregistrés dans la base de données
 	const users = await prisma.user.findMany()
-
-	// Supprimer les utilisateurs qui ne sont plus dans le serveur
-	// for (const user of users) {
-	// 	const member = members.find(member => member.discordId === user.discordId)
-	// 	if (member) continue
-
-	// 	await prisma.user.delete({
-	// 		where: {
-	// 			id: user.id
-	// 		}
-	// 	})
-	// }
 
 	// Mettre à jour les utilisateurs qui sont dans le serveur
 	for (const member of members) {
@@ -60,4 +63,9 @@ export const execute: TaskExecute = async() => {
 
 	// Log
 	logger.info("Les utilisateurs ont bien été mis à jour.")
+
+	// Réponse
+	await command.editReply({
+		embeds: [createSuccessEmbed({ content: "Les utilisateurs ont bien été mis à jour." })]
+	})
 }

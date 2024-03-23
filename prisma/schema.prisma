@@ -39,10 +39,6 @@ enum GameStatus {
     CANCELED
 }
 
-enum CooldownType {
-    KILL
-}
-
 model Config {
     key   String  @id
     value String?
@@ -58,6 +54,7 @@ model Game {
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
+    vote      Vote[]
 }
 
 model User {
@@ -82,11 +79,13 @@ model Player {
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 
-    userId         Int
-    gameId         Int
-    playerTask     PlayerTask[]
-    playerCooldown PlayerCooldown[]
-    colorId        Int
+    userId      Int
+    gameId      Int
+    playerTask  PlayerTask[]
+    colorId     Int
+    voteTargets PlayerVote[] @relation("target")
+    voteAuthors PlayerVote[] @relation("author")
+    votes       Vote[]
 }
 
 model PlayerColor {
@@ -126,9 +125,11 @@ model Room {
 }
 
 model PlayerTask {
-    player Player  @relation(fields: [playerId], references: [id], onDelete: Cascade)
-    task   Task    @relation(fields: [taskId], references: [id], onDelete: Cascade)
-    done   Boolean @default(false)
+    player          Player  @relation(fields: [playerId], references: [id], onDelete: Cascade)
+    task            Task    @relation(fields: [taskId], references: [id], onDelete: Cascade)
+    done            Boolean @default(false)
+    playerMessageId String?
+    modoMessageId   String?
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
@@ -139,25 +140,30 @@ model PlayerTask {
     @@id([playerId, taskId])
 }
 
-model Cooldown {
-    id             Int              @id @default(autoincrement())
-    type           CooldownType
-    expiresAt      DateTime
-    playerCooldown PlayerCooldown[]
+model Vote {
+    id               Int     @id @default(autoincrement())
+    game             Game    @relation(fields: [gameId], references: [id], onDelete: Cascade)
+    eliminatedPlayer Player? @relation(fields: [eliminatedPlayerId], references: [id], onDelete: SetNull)
+    finished         Boolean @default(false)
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
+
+    gameId             Int
+    eliminatedPlayerId Int?
+    playerVotes        PlayerVote[]
 }
 
-model PlayerCooldown {
-    player   Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
-    cooldown Cooldown @relation(fields: [cooldownId], references: [id], onDelete: Cascade)
+model PlayerVote {
+    id     Int     @id @default(autoincrement())
+    author Player  @relation(fields: [authorId], references: [id], onDelete: Cascade, name: "author")
+    target Player? @relation(fields: [targetId], references: [id], onDelete: Cascade, name: "target")
+    vote   Vote    @relation(fields: [voteId], references: [id], onDelete: Cascade)
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 
-    playerId   Int
-    cooldownId Int
-
-    @@id([playerId, cooldownId])
+    authorId Int
+    targetId Int?
+    voteId   Int
 }

@@ -1,3 +1,4 @@
+import { prisma } from "@/lib/db"
 import type { PlayerRole } from "@prisma/client"
 
 export const texts: Record<PlayerRole, string> = {
@@ -22,4 +23,12 @@ Votre objectif est de réparer le vaisseau et de trouver les imposteurs.
 
 Bonne chance !`
 
+}
+
+export const getIntConfig = async(key: string): Promise<number | null> => {
+	const config = await prisma.config.findUnique({ where: { key } })
+	if (!config || !config.value) {
+		return null
+	}
+	return Number.parseInt(config.value)
 }

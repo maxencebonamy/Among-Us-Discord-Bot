@@ -4,6 +4,8 @@ import { CompletePlayer, RelatedPlayerSchema, CompleteTask, RelatedTaskSchema } 
 
 export const PlayerTaskSchema = z.object({
   done: z.boolean(),
+  playerMessageId: z.string().nullish(),
+  modoMessageId: z.string().nullish(),
   createdAt: z.date(),
   updatedAt: z.date(),
   playerId: z.number().int(),
