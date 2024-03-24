@@ -36,9 +36,9 @@ export const execute: CommandExecute = async(command) => {
 	// Créer une barre de progression avec des emojis
 	const progressBar = `${"🟩".repeat(Math.round(percentage / 10)) + "⬛".repeat(10 - Math.round(percentage / 10))} **${percentage}%**`
 
-	const players = await prisma.player.findMany({ where: { game } })
+	const players = await prisma.player.findMany({ where: { game, alive: true } })
 	await Promise.all(players.map(async(player) => {
-		const channel = await command.guild?.channels.fetch(player.channelId)
+		const channel = await command.guild?.channels.fetch(player.channelId).catch(() => null)
 		if (!channel || channel.type !== ChannelType.GuildText) return
 
 		// Envoyer le message de réunion

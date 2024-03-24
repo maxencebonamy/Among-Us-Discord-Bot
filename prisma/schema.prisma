@@ -75,7 +75,9 @@ model Player {
     game                 Game        @relation(fields: [gameId], references: [id], onDelete: Cascade)
     channelId            String
     color                PlayerColor @relation(fields: [colorId], references: [id], onDelete: Cascade)
+    actionMessageId      String?
     progressionMessageId String?
+    reportCode           String?
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
@@ -126,6 +128,7 @@ model Room {
 }
 
 model PlayerTask {
+	id              Int     @id @default(autoincrement())
     player          Player  @relation(fields: [playerId], references: [id], onDelete: Cascade)
     task            Task    @relation(fields: [taskId], references: [id], onDelete: Cascade)
     done            Boolean @default(false)
@@ -137,8 +140,6 @@ model PlayerTask {
 
     playerId Int
     taskId   Int
-
-    @@id([playerId, taskId])
 }
 
 model Vote {

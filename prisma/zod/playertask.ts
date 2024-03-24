@@ -3,6 +3,7 @@ import * as imports from "../null"
 import { CompletePlayer, RelatedPlayerSchema, CompleteTask, RelatedTaskSchema } from "./index"
 
 export const PlayerTaskSchema = z.object({
+  id: z.number().int(),
   done: z.boolean(),
   playerMessageId: z.string().nullish(),
   modoMessageId: z.string().nullish(),

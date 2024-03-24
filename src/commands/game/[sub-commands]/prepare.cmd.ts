@@ -62,7 +62,9 @@ export const execute: CommandExecute = async(command) => {
 	})
 	await Promise.all(players.map(async player => {
 		let tasksToAssign = []
-		if (player.role === PlayerRole.IMPOSTOR) {
+		// if (player.role === PlayerRole.IMPOSTOR) {
+		// eslint-disable-next-line no-constant-condition
+		if (false) {
 			tasksToAssign = [...tasks]
 		} else {
 			const tasksEasy = shuffle(tasks.filter(task => task.level === TaskLevel.EASY))

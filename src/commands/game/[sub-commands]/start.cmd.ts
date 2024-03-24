@@ -4,10 +4,12 @@ import { replyError } from "@/utils/discord/command"
 import { createCustomEmbed } from "@/utils/discord/components/embed"
 import { isAdmin } from "@/utils/discord/roles"
 import type { CommandExecute } from "@/utils/handler/command"
-import { ChannelType } from "discord.js"
+import { ButtonStyle, ChannelType } from "discord.js"
 import { getIntConfig, texts } from "./start.util"
 import { formatPlayer } from "@/utils/game/players"
 import { PlayerRole } from "@prisma/client"
+import { createButton } from "@/utils/discord/components/button"
+import { createRow } from "@/utils/discord/components/row"
 
 export const execute: CommandExecute = async(command) => {
 	// Vérifier si l'utilisateur est un administrateur
@@ -54,7 +56,19 @@ export const execute: CommandExecute = async(command) => {
 		where: { gameId: game.id },
 		include: { user: true, color: true }
 	})
-	const allPlayerTasks = await prisma.playerTask.findMany({ include: { task: true } })
+	const allPlayerTasks = await prisma.playerTask.findMany({ include: { task: { include: { room: true } } } })
+
+	// Boutons
+	const killButton = createButton({
+		id: JSON.stringify({ type: "playerKill" }),
+		label: "🔪 Tuer un joueur",
+		style: ButtonStyle.Danger
+	})
+	const reportButton = createButton({
+		id: JSON.stringify({ type: "playerReport" }),
+		label: "💀 Signaler un cadavre",
+		style: ButtonStyle.Primary
+	})
 
 	// Envoyer un message dans chaque salon de joueur
 	await Promise.all(players.map(async(player) => {
@@ -75,6 +89,13 @@ export const execute: CommandExecute = async(command) => {
 			})]
 		}).then(async message => message.pin())
 
+		const actionMessage = await playerChannel.send({
+			embeds: [createCustomEmbed({
+				title: "🎮 Actions",
+				content: "Que souhaitez-vous faire ?"
+			})],
+			components: player.role === PlayerRole.IMPOSTOR ? [createRow(killButton, reportButton)] : [createRow(reportButton)]
+		})
 		const progressionMessage = await playerChannel.send({
 			embeds: [createCustomEmbed({
 				title: "📈 Progression de la partie",
@@ -83,7 +104,10 @@ export const execute: CommandExecute = async(command) => {
 		})
 		await prisma.player.update({
 			where: { id: player.id },
-			data: { progressionMessageId: progressionMessage.id }
+			data: {
+				actionMessageId: actionMessage.id,
+				progressionMessageId: progressionMessage.id
+			}
 		})
 
 		// Tasks
@@ -92,17 +116,11 @@ export const execute: CommandExecute = async(command) => {
 			const message = await playerChannel.send({
 				embeds: [createCustomEmbed({
 					title: `${playerTask.task.emoji} ${playerTask.task.name}`,
-					content: playerTask.task.description
+					content: `${playerTask.task.description}\n\n*Salle: ${playerTask.task.room.name}*`
 				})]
 			})
 			await prisma.playerTask.update({
-				where: {
-					// eslint-disable-next-line camelcase
-					playerId_taskId: {
-						playerId: player.id,
-						taskId: playerTask.taskId
-					}
-				},
+				where: { id: playerTask.id },
 				data: { playerMessageId: message.id }
 			})
 		}))

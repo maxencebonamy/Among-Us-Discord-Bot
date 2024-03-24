@@ -66,7 +66,7 @@ export const execute: CommandExecute = async(command) => {
 	await playerChannel.send({
 		embeds: [createCustomEmbed({
 			title: "🔪 Vous avez été éliminé !",
-			content: "Allongez-vous par terre et attendez la fin de la partie."
+			content: "Attendez qu'un modo vienne vous chercher."
 		})]
 	})
 
