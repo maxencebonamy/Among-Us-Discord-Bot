@@ -121,7 +121,7 @@ Donnez-lui le code suivant pour qu'il puisse signaler votre cadavre :\n# ${repor
 	await prisma.player.updateMany({
 		where: { channelId: channel.id },
 		data: { cooldown: new Date(Date.now() + 1000 * killCooldown) }
-	}).then(() => logger.info("Cooldown updated"))
+	})
 
 	// Répondre à l'interaction
 	await interaction.reply({

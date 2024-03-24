@@ -136,7 +136,7 @@ export const checkGameEnd = async(): Promise<void> => {
 			content: "Les **crewmates** ont gagné !\nToutes les imposteurs ont été éliminés !\n\nMerci d'avoir joué !"
 		})
 	}
-	if (impostors.length >= alivePlayers.length) {
+	if (impostors.length >= alivePlayers.length - impostors.length) {
 		embed = createCustomEmbed({
 			title: "🎉 Fin de la partie",
 			content: "Les **imposteurs** ont gagné !\nTous les crewmates ont été éliminés !\n\nMerci d'avoir joué !"
