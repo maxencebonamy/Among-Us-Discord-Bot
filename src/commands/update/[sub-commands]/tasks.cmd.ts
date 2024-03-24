@@ -28,7 +28,7 @@ export const execute: CommandExecute = async(command) => {
 
 	// Récupérer les salles et les tasks
 	let tasks = await prisma.task.findMany({ include: { room: true } })
-	const rooms = tasks.map(task => task.room).filter((value, index, self) => self.indexOf(value) === index)
+	const rooms = await prisma.room.findMany({ where: { tasks: { some: {} } } })
 
 	// Récupérer les channels de tasks
 	const categories = Object.values(guilds.main.channels)

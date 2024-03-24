@@ -6,7 +6,8 @@ import { CompleteRoom, RelatedRoomSchema, CompletePlayerTask, RelatedPlayerTaskS
 export const TaskSchema = z.object({
   id: z.number().int(),
   name: z.string(),
-  description: z.string(),
+  playerDescription: z.string(),
+  modoDescription: z.string(),
   level: z.nativeEnum(TaskLevel),
   channelId: z.string().nullish(),
   emoji: z.string(),

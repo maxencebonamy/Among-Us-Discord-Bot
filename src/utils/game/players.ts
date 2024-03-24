@@ -104,7 +104,7 @@ export const dispatchTasks = async(deadPlayer: Player & { user: User, color: Pla
 				content: ""
 			})],
 			components: [createRow(createButton({
-				id: JSON.stringify({ type: "completeTask", playerId: lowestScorePlayer.id, taskId: deadPlayerTask.taskId }),
+				id: JSON.stringify({ type: "completeTask", playerTaskId: deadPlayerTask.id }),
 				label: "OK",
 				style: ButtonStyle.Success
 			}))]

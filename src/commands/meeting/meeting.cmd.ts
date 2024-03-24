@@ -4,6 +4,7 @@ import { createButton } from "@/utils/discord/components/button"
 import { createCustomEmbed } from "@/utils/discord/components/embed"
 import { createRow } from "@/utils/discord/components/row"
 import { isAdmin } from "@/utils/discord/roles"
+import { dispatchTasks } from "@/utils/game/players"
 import type { CommandExecute } from "@/utils/handler/command"
 import { ButtonStyle, ChannelType } from "discord.js"
 
@@ -74,4 +75,13 @@ export const execute: CommandExecute = async(command) => {
 			content: "Une réunion d'urgence a été déclenchée."
 		})]
 	})
+
+	// Redistribuer les tasks
+	const playersToDispatch = await prisma.player.findMany({
+		where: { game, alive: false, role: "CREWMATE", playerTask: { some: {} } },
+		include: { user: true, color: true }
+	})
+	for (const playerToDispatch of playersToDispatch) {
+		await dispatchTasks(playerToDispatch)
+	}
 }

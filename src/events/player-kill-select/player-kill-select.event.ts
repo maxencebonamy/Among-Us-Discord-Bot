@@ -28,6 +28,35 @@ export const execute: EventExecute<"interactionCreate"> = async(interaction) => 
 
 	if (!interaction.isStringSelectMenu()) return
 
+	// Récupérer l'auteur du kill
+	const channel = interaction.channel
+	if (!channel || channel.type !== ChannelType.GuildText) {
+		logger.error("Vote channel not found")
+		return
+	}
+	const impostor = await prisma.player.findFirst({ where: { channelId: channel.id } })
+	if (!impostor) {
+		logger.error("Impostor not found")
+		return
+	}
+
+	// Vérifier si l'imposteur a un cooldown
+	if (impostor.cooldown && Date.now() < impostor.cooldown.getTime()) {
+		const remainingTime = Math.round((impostor.cooldown.getTime() - Date.now()) / 1000)
+		await interaction.reply({
+			embeds: [createCustomEmbed({
+				title: "🔪 Tuer un joueur",
+				content: `Vous devez attendre **${remainingTime} secondes** pour tuer un autre joueur.`
+			})],
+			components: [createRow(createButton({
+				id: JSON.stringify({ type: "deleteMessage" }),
+				label: "OK",
+				style: ButtonStyle.Primary
+			}))]
+		})
+		return
+	}
+
 	// Récupérer la partie
 	const game = await prisma.game.findFirst({ where: { status: { in: ["RUNNING"] } } })
 	if (!game) {
@@ -88,13 +117,6 @@ Donnez-lui le code suivant pour qu'il puisse signaler votre cadavre :\n# ${repor
 		}
 	})
 
-	// Récupérer l'auteur du kill
-	const channel = interaction.channel
-	if (!channel || channel.type !== ChannelType.GuildText) {
-		logger.error("Vote channel not found")
-		return
-	}
-
 	// Cooldown
 	await prisma.player.updateMany({
 		where: { channelId: channel.id },
@@ -115,5 +137,5 @@ Donnez-lui le code suivant pour qu'il puisse signaler votre cadavre :\n# ${repor
 	await interaction.message.delete()
 
 	// Redistribuer les tasks
-	await dispatchTasks(player)
+	// await dispatchTasks(player)
 }

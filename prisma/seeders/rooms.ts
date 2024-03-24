@@ -7,9 +7,9 @@ const ROOMS = [
 	"Centre de contrôle",
 	"Jungle",
 	"Pont supérieur",
-	"Retro",
+	"Retro Gaming",
 	"Pont inférieur",
-	"Bureau",
+	"Bureau de l'inspecteur",
 	"Salle de jeu",
 	"Réfectoire"
 ] as const

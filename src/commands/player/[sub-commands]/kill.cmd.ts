@@ -4,7 +4,7 @@ import { createCustomEmbed, createSuccessEmbed } from "@/utils/discord/component
 import { isAdmin } from "@/utils/discord/roles"
 import type { Color } from "@/utils/game/colors"
 import { getColor } from "@/utils/game/colors"
-import { formatPlayer } from "@/utils/game/players"
+import { dispatchTasks, formatPlayer } from "@/utils/game/players"
 import type { CommandExecute } from "@/utils/handler/command"
 import { logger } from "@/utils/logger"
 import { ChannelType } from "discord.js"
@@ -69,6 +69,8 @@ export const execute: CommandExecute = async(command) => {
 			content: "Attendez qu'un modo vienne vous chercher."
 		})]
 	})
+
+	await dispatchTasks(player)
 
 	// Répondre
 	await command.reply({

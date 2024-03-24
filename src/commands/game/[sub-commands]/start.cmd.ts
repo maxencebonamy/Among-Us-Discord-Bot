@@ -27,17 +27,24 @@ export const execute: CommandExecute = async(command) => {
 
 	await command.deferReply({ ephemeral: true })
 
-	// Récupérer la variables de configuration pour le nombre de tasks faciles
+	// Récupérer la variable de configuration pour le nombre de tasks faciles
 	const nbTasksEasy = await getIntConfig("NB_TASKS_EASY")
 	if (!nbTasksEasy) {
 		await replyError(command, "La variable de configuration \"NB_TASKS_EASY\" n'a pas été trouvée.")
 		return
 	}
 
-	// Récupérer la variables de configuration pour le nombre de tasks difficiles
+	// Récupérer la variable de configuration pour le nombre de tasks difficiles
 	const nbTasksHard = await getIntConfig("NB_TASKS_HARD")
 	if (!nbTasksHard) {
 		await replyError(command, "La variable de configuration \"NB_TASKS_HARD\" n'a pas été trouvée.")
+		return
+	}
+
+	// Récupérer la variable de configuration pour le cooldown de kill
+	const killCooldown = await getIntConfig("KILL_COOLDOWN")
+	if (!killCooldown) {
+		await replyError(command, "La variable de configuration \"KILL_COOLDOWN\" n'a pas été trouvée.")
 		return
 	}
 
@@ -80,6 +87,11 @@ export const execute: CommandExecute = async(command) => {
 			const impostor = players.find(p => p.id !== player.id && p.role === PlayerRole.IMPOSTOR)
 			if (!impostor) return
 			content = content.replace("[impostor]", formatPlayer(impostor))
+
+			await prisma.player.update({
+				where: { id: player.id },
+				data: { cooldown: new Date(Date.now() + killCooldown * 1000) }
+			})
 		}
 
 		await playerChannel.send({
@@ -99,7 +111,7 @@ export const execute: CommandExecute = async(command) => {
 		const progressionMessage = await playerChannel.send({
 			embeds: [createCustomEmbed({
 				title: "📈 Progression de la partie",
-				content: "0/0 tasks réalisées\n⬛⬛⬛⬛⬛⬛⬛⬛⬛⬛ **0%**"
+				content: `0/${allPlayerTasks.length} tasks réalisées\n⬛⬛⬛⬛⬛⬛⬛⬛⬛⬛ **0%**`
 			})]
 		})
 		await prisma.player.update({
@@ -113,10 +125,17 @@ export const execute: CommandExecute = async(command) => {
 		// Tasks
 		const playerTasks = allPlayerTasks.filter(task => task.playerId === player.id)
 		await Promise.all(playerTasks.map(async(playerTask) => {
+			let description = playerTask.task.playerDescription
+			if (description.includes("[color]")) {
+				description = description.replace("[color]", `${player.color.emoji} ${player.color.name.toUpperCase()}`)
+			}
+			if (description.includes("[number")) {
+				description = description.replace("[number]", (Math.floor(Math.random() * 100) + 1).toString())
+			}
 			const message = await playerChannel.send({
 				embeds: [createCustomEmbed({
 					title: `${playerTask.task.emoji} ${playerTask.task.name}`,
-					content: `${playerTask.task.description}\n\n*Salle: ${playerTask.task.room.name}*`
+					content: `${description}\n\n*Salle: ${playerTask.task.room.name}*`
 				})]
 			})
 			await prisma.playerTask.update({

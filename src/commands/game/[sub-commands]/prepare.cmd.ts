@@ -50,7 +50,7 @@ export const execute: CommandExecute = async(command) => {
 		await channel.send({
 			embeds: [createCustomEmbed({
 				title: `${task.emoji} ${task.name} (${task.level === TaskLevel.EASY ? "🟢 Facile" : "🔴 Difficile"})`,
-				content: task.description
+				content: task.modoDescription
 			})]
 		}).then(async message => message.pin())
 	}))
@@ -76,23 +76,28 @@ export const execute: CommandExecute = async(command) => {
 			const channel = await command.guild?.channels.fetch(task.channelId ?? "")
 			if (!channel || channel.type !== ChannelType.GuildText) return
 
+			const playerTask = await prisma.playerTask.create({
+				data: {
+					playerId: player.id,
+					taskId: task.id
+				}
+			})
+
 			const message = await channel.send({
 				embeds: [createCustomEmbed({
 					title: formatPlayer(player),
 					content: ""
 				})],
 				components: [createRow(createButton({
-					id: JSON.stringify({ type: "completeTask", playerId: player.id, taskId: task.id }),
+					id: JSON.stringify({ type: "completeTask", playerTaskId: playerTask.id }),
 					label: "OK",
 					style: ButtonStyle.Success
 				}))]
 			})
-			await prisma.playerTask.create({
-				data: {
-					playerId: player.id,
-					taskId: task.id,
-					modoMessageId: message.id
-				}
+
+			await prisma.playerTask.update({
+				where: { id: playerTask.id },
+				data: { modoMessageId: message.id }
 			})
 		}))
 	}))
