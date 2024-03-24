@@ -3,7 +3,7 @@ import { PlayerKillSelectSchema } from "./player-kill-select.util"
 import { createCustomEmbed, createSuccessEmbed } from "@/utils/discord/components/embed"
 import { prisma } from "@/lib/db"
 import { logger } from "@/utils/logger"
-import { dispatchTasks, formatPlayer } from "@/utils/game/players"
+import { checkGameEnd, dispatchTasks, formatPlayer } from "@/utils/game/players"
 import { createButton } from "@/utils/discord/components/button"
 import { ButtonStyle, ChannelType } from "discord.js"
 import { createRow } from "@/utils/discord/components/row"
@@ -138,4 +138,5 @@ Donnez-lui le code suivant pour qu'il puisse signaler votre cadavre :\n# ${repor
 
 	// Redistribuer les tasks
 	// await dispatchTasks(player)
+	await checkGameEnd()
 }

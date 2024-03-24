@@ -1,3 +1,4 @@
+import { guilds } from "@/configs/guild"
 import { prisma } from "@/lib/db"
 import { replyError } from "@/utils/discord/command"
 import { createButton } from "@/utils/discord/components/button"
@@ -67,6 +68,16 @@ export const execute: CommandExecute = async(command) => {
 			})]
 		})
 	}))
+
+	// Message dans le channel des modos
+	const modosChannel = await command.guild?.channels.fetch(guilds.main.channels.modos).catch(() => null)
+	if (!modosChannel || modosChannel.type !== ChannelType.GuildText) return
+	await modosChannel.send({
+		embeds: [createCustomEmbed({
+			title: "🚨 Réunion d'urgence",
+			content: "Une réunion d'urgence a été déclenchée."
+		})]
+	})
 
 	// Répondre
 	await command.editReply({

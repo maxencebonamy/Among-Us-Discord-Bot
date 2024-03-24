@@ -4,7 +4,7 @@ import { createCustomEmbed, createSuccessEmbed } from "@/utils/discord/component
 import { isAdmin } from "@/utils/discord/roles"
 import type { Color } from "@/utils/game/colors"
 import { getColor } from "@/utils/game/colors"
-import { dispatchTasks, formatPlayer } from "@/utils/game/players"
+import { checkGameEnd, dispatchTasks, formatPlayer } from "@/utils/game/players"
 import type { CommandExecute } from "@/utils/handler/command"
 import { logger } from "@/utils/logger"
 import { ChannelType } from "discord.js"
@@ -53,16 +53,27 @@ export const execute: CommandExecute = async(command) => {
 		await replyError(command, "Le joueur est déjà mort.")
 		return
 	}
+	await command.deferReply({ ephemeral: true })
 
 	// Tuer le joueur
 	await prisma.player.update({ where: { id: player.id }, data: { alive: false } })
 
-	// Envoyer un message au joueur
-	const playerChannel = await command.guild?.channels.fetch(player.channelId)
+	// Récupérer le channel du joueur
+	const playerChannel = await command.guild?.channels.fetch(player.channelId).catch(() => null)
 	if (!playerChannel || playerChannel.type !== ChannelType.GuildText) {
-		logger.error(`Cannot fetch player channel ${player.channelId}`)
+		logger.error("Impossible de récupérer le channel du joueur.")
 		return
 	}
+
+	// Supprimer les messages d'action et de progression
+	const playerChannelMessages = await playerChannel.messages.fetch()
+	await Promise.all(playerChannelMessages.map(async(message) => {
+		if (message.id === player.progressionMessageId || message.id === player.actionMessageId) {
+			await message.delete()
+		}
+	}))
+
+	// Envoyer un message au joueur
 	await playerChannel.send({
 		embeds: [createCustomEmbed({
 			title: "🔪 Vous avez été éliminé !",
@@ -71,12 +82,12 @@ export const execute: CommandExecute = async(command) => {
 	})
 
 	await dispatchTasks(player)
+	await checkGameEnd()
 
 	// Répondre
-	await command.reply({
+	await command.editReply({
 		embeds: [createSuccessEmbed({
 			content: `Le joueur ${formatPlayer(player)} a été tué avec succès.`
-		})],
-		ephemeral: true
+		})]
 	})
 }

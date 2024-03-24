@@ -16,3 +16,8 @@ export const slashCommand: SlashCommandDefition = new SlashCommandBuilder()
 	.addSubcommand(subCommand => subCommand
 		.setName("users")
 		.setDescription("Mettre à jour les utilisateurs conformément à la base de données"))
+
+	// players
+	.addSubcommand(subCommand => subCommand
+		.setName("players")
+		.setDescription("Mettre à jour les channels des joueurs conformément à la base de données"))

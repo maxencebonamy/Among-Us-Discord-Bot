@@ -19,15 +19,3 @@ export const slashCommand: SlashCommandDefition = new SlashCommandBuilder()
 			.addChoices(
 				...colors.map(color => ({ name: `${color.emoji} ${color.name}`, value: color.name }))
 			)))
-
-	// revive
-	.addSubcommand(subCommand => subCommand
-		.setName("revive")
-		.setDescription("Réssuciter un joueur")
-		.addStringOption(option => option
-			.setName("couleur")
-			.setDescription("La couleur du joueur à réssuciter")
-			.setRequired(true)
-			.addChoices(
-				...colors.map(color => ({ name: `${color.emoji} ${color.name}`, value: color.name }))
-			)))

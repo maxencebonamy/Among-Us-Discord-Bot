@@ -4,9 +4,7 @@ import { prisma } from "@/lib/db"
 import { ChannelType } from "discord.js"
 import { logger } from "@/utils/logger"
 import { createCustomEmbed } from "@/utils/discord/components/embed"
-import { formatPlayer } from "@/utils/game/players"
-import { createRow } from "@/utils/discord/components/row"
-import { createCancelButton, createOkButton } from "@/utils/discord/components/button"
+import { guilds } from "@/configs/guild"
 
 export const enableInDev = true
 
@@ -26,10 +24,10 @@ export const execute: EventExecute<"interactionCreate"> = async(interaction) => 
 	if (!customId.success) return
 
 	// Récupérer les données
-	const { playerId, taskId } = customId.data
+	const { playerTaskId } = customId.data
 	const playerTask = await prisma.playerTask.findFirst({
 		// eslint-disable-next-line camelcase
-		where: { playerId: playerId, taskId: taskId },
+		where: { id: playerTaskId },
 		include: { task: true, player: { include: { color: true, user: true } } }
 	})
 	if (!playerTask) return
@@ -85,4 +83,40 @@ export const execute: EventExecute<"interactionCreate"> = async(interaction) => 
 
 	// Supprimer le message
 	await interaction.message.delete()
+
+	// Vérifier si la partie est terminée
+	const playerTasks = await prisma.playerTask.findMany({
+		where: { player: { gameId: playerTask.player.gameId } }
+	})
+	if (!playerTasks.every(task => task.done)) return
+
+	// Mettre à jour la partie
+	await prisma.game.update({
+		where: { id: playerTask.player.gameId },
+		data: { status: "FINISHED" }
+	})
+
+	// Envoyer un message de fin de partie à tous les joueurs
+	const embed = createCustomEmbed({
+		title: "🎉 Fin de la partie",
+		content: "Les **crewmates** ont gagné !\nToutes les tâches ont été complétées !\n\nMerci d'avoir joué !"
+	})
+	const players = await prisma.player.findMany({
+		where: { gameId: playerTask.player.gameId },
+		select: { channelId: true }
+	})
+	await Promise.all(players.map(async player => {
+		const channel = await guild.channels.fetch(player.channelId).catch(() => null)
+		if (!channel || channel.type !== ChannelType.GuildText) return
+
+		await channel.send({ embeds: [embed] })
+	}))
+
+	const adminChannel = await guild.channels.fetch(guilds.main.channels.admins).catch(() => null)
+	if (!adminChannel || adminChannel.type !== ChannelType.GuildText) return
+	await adminChannel.send({ embeds: [embed] })
+
+	const modosChannel = await guild.channels.fetch(guilds.main.channels.modos).catch(() => null)
+	if (!modosChannel || modosChannel.type !== ChannelType.GuildText) return
+	await modosChannel.send({ embeds: [embed] })
 }

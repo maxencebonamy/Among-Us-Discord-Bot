@@ -10,6 +10,7 @@ import { formatPlayer } from "@/utils/game/players"
 import { PlayerRole } from "@prisma/client"
 import { createButton } from "@/utils/discord/components/button"
 import { createRow } from "@/utils/discord/components/row"
+import { guilds } from "@/configs/guild"
 
 export const execute: CommandExecute = async(command) => {
 	// Vérifier si l'utilisateur est un administrateur
@@ -63,7 +64,10 @@ export const execute: CommandExecute = async(command) => {
 		where: { gameId: game.id },
 		include: { user: true, color: true }
 	})
-	const allPlayerTasks = await prisma.playerTask.findMany({ include: { task: { include: { room: true } } } })
+	const allPlayerTasks = await prisma.playerTask.findMany({
+		where: { player: { gameId: game.id } },
+		include: { task: { include: { room: true } } }
+	})
 
 	// Boutons
 	const killButton = createButton({
@@ -156,4 +160,14 @@ export const execute: CommandExecute = async(command) => {
 	// Log
 	const commandUser = await prisma.user.findUnique({ where: { discordId: command.user.id } })
 	await log("🎮 Partie lancée", `La partie #${game.id} a été lancée par ${commandUser?.name ?? "?"}.`)
+
+	// Message dans le channel des modos
+	const modosChannel = await command.guild?.channels.fetch(guilds.main.channels.modos).catch(() => null)
+	if (!modosChannel || modosChannel.type !== ChannelType.GuildText) return
+	await modosChannel.send({
+		embeds: [createCustomEmbed({
+			title: "🎮 Partie lancée",
+			content: "La partie a commencé !"
+		})]
+	})
 }
