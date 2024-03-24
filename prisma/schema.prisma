@@ -78,6 +78,7 @@ model Player {
     actionMessageId      String?
     progressionMessageId String?
     reportCode           String?
+	cooldown			 DateTime?
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt

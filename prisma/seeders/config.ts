@@ -18,6 +18,10 @@ export const seedConfig = async(prisma: PrismaClient): Promise<void> => {
 			{
 				key: "NB_TASKS_HARD",
 				value: "2"
+			},
+			{
+				key: "KILL_COOLDOWN",
+				value: "120"  // seconds
 			}
 		]
 	})

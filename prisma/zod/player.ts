@@ -11,6 +11,7 @@ export const PlayerSchema = z.object({
   actionMessageId: z.string().nullish(),
   progressionMessageId: z.string().nullish(),
   reportCode: z.string().nullish(),
+  cooldown: z.date().nullish(),
   createdAt: z.date(),
   updatedAt: z.date(),
   userId: z.number().int(),

@@ -2,10 +2,11 @@ import type { EventExecute, EventName } from "@/utils/handler/event"
 import { PlayerKillSchema } from "./player-kill.util"
 import { createCustomEmbed } from "@/utils/discord/components/embed"
 import { createRow } from "@/utils/discord/components/row"
-import { StringSelectMenuBuilder } from "discord.js"
+import { ButtonStyle, ChannelType, StringSelectMenuBuilder } from "discord.js"
 import { formatPlayer } from "@/utils/game/players"
 import { prisma } from "@/lib/db"
 import { logger } from "@/utils/logger"
+import { createButton } from "@/utils/discord/components/button"
 
 export const enableInDev = true
 
@@ -34,6 +35,35 @@ export const execute: EventExecute<"interactionCreate"> = async(interaction) => 
 		return
 	}
 
+	// Récupérer l'auteur du kill
+	const channel = interaction.channel
+	if (!channel || channel.type !== ChannelType.GuildText) {
+		logger.error("Vote channel not found")
+		return
+	}
+	const impostor = await prisma.player.findFirst({ where: { channelId: channel.id } })
+	if (!impostor) {
+		logger.error("Impostor not found")
+		return
+	}
+
+	// Vérifier si l'imposteur a un cooldown
+	if (impostor.cooldown && Date.now() < impostor.cooldown.getTime()) {
+		const remainingTime = Math.round((impostor.cooldown.getTime() - Date.now()) / 1000)
+		await interaction.reply({
+			embeds: [createCustomEmbed({
+				title: "🔪 Tuer un joueur",
+				content: `Vous devez attendre **${remainingTime} secondes** pour tuer un autre joueur.`
+			})],
+			components: [createRow(createButton({
+				id: JSON.stringify({ type: "deleteMessage" }),
+				label: "OK",
+				style: ButtonStyle.Primary
+			}))]
+		})
+		return
+	}
+
 	// Créer le menu de sélection des joueurs
 	const players = await prisma.player.findMany({
 		where: { game, alive: true, role: "CREWMATE" },
@@ -56,6 +86,10 @@ export const execute: EventExecute<"interactionCreate"> = async(interaction) => 
 			title: "🔪 Tuer un joueur",
 			content: "Sélectionner le joueur à tuer."
 		})],
-		components: [createRow(playerSelectMenu)]
+		components: [createRow(playerSelectMenu), createRow(createButton({
+			id: JSON.stringify({ type: "deleteMessage" }),
+			label: "Annuler",
+			style: ButtonStyle.Secondary
+		}))]
 	})
 }
