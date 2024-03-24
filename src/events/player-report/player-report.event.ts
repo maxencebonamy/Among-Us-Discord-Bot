@@ -42,13 +42,12 @@ const playerReportEvent = async(interaction: Interaction<CacheType>, parsedCusto
 }
 
 const playerReportModalEvent = async(interaction: Interaction<CacheType>, parsedCustomId: unknown): Promise<void> => {
+
 	const customId = PlayerReportModalSchema.safeParse(parsedCustomId)
 	if (!customId.success) return
 
 	// Vérifier si l'interaction est un modal
 	if (!interaction.isModalSubmit()) return
-
-	logger.info("playerReportModalEvent")
 
 	// Récupérer le code du cadavre
 	const reportCode = interaction.fields.getTextInputValue("reportCode")
@@ -84,7 +83,7 @@ const playerReportModalEvent = async(interaction: Interaction<CacheType>, parsed
 	// Envoyer le message dans le channel admin
 	await adminChannel.send({
 		embeds: [createCustomEmbed({
-			title: "Nouveau cadavre signalé",
+			title: "💀 Nouveau cadavre signalé",
 			content: `Le cadavre du joueur ${formatPlayer(reportPlayer)} a été signalé.
 Pour déclencher une réunion d'urgence, utilisez la commande \`/meeting\`.`
 		})]
@@ -102,16 +101,17 @@ Pour déclencher une réunion d'urgence, utilisez la commande \`/meeting\`.`
 }
 
 export const execute: EventExecute<"interactionCreate"> = async(interaction) => {
-	// Vérifier si l'interaction est une complétion de task
-	if (!interaction.isMessageComponent()) return
-	let parsedCustomId = null
-	try {
+	// Vérifier si l'interaction est un report
+	if (interaction.isMessageComponent() || interaction.isModalSubmit()) {
+		let parsedCustomId = null
+		try {
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-		parsedCustomId = JSON.parse(interaction.customId)
-	} catch (error) {
-		return
-	}
+			parsedCustomId = JSON.parse(interaction.customId)
+		} catch (error) {
+			return
+		}
 
-	await playerReportEvent(interaction, parsedCustomId)
-	await playerReportModalEvent(interaction, parsedCustomId)
+		await playerReportEvent(interaction, parsedCustomId)
+		await playerReportModalEvent(interaction, parsedCustomId)
+	}
 }
