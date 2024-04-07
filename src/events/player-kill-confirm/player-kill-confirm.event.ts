@@ -1,5 +1,5 @@
 import type { EventExecute, EventName } from "@/utils/handler/event"
-import { PlayerKillSelectSchema } from "./player-kill-select.util"
+import { PlayerKillConfirmSchema } from "./player-kill-confirm.util"
 import { createCustomEmbed, createSuccessEmbed } from "@/utils/discord/components/embed"
 import { prisma } from "@/lib/db"
 import { logger } from "@/utils/logger"
@@ -23,10 +23,10 @@ export const execute: EventExecute<"interactionCreate"> = async(interaction) => 
 	} catch (error) {
 		return
 	}
-	const customId = PlayerKillSelectSchema.safeParse(parsedCustomId)
+	const customId = PlayerKillConfirmSchema.safeParse(parsedCustomId)
 	if (!customId.success) return
 
-	if (!interaction.isStringSelectMenu()) return
+	const { playerId } = customId.data
 
 	// Récupérer l'auteur du kill
 	const channel = interaction.channel
@@ -60,13 +60,26 @@ export const execute: EventExecute<"interactionCreate"> = async(interaction) => 
 				style: ButtonStyle.Primary
 			}))]
 		})
-		await interaction.message.delete()
+		return
+	}
+
+	// Récupérer la partie
+	const game = await prisma.game.findFirst({ where: { status: { in: ["RUNNING"] } } })
+	if (!game) {
+		logger.error("Aucune partie en cours.")
+		return
+	}
+
+	// Récupérer la variable de config pour le cooldown
+	const killCooldown = await getIntConfig("KILL_COOLDOWN")
+	if (!killCooldown) {
+		logger.error("La variable de configuration \"KILL_COOLDOWN\" n'a pas été trouvée.")
 		return
 	}
 
 	// Récupérer le joueur
 	const player = await prisma.player.findUnique({
-		where: { id: parseInt(interaction.values[0]) },
+		where: { id: playerId },
 		include: { user: true, color: true }
 	})
 	if (!player) {
@@ -74,23 +87,60 @@ export const execute: EventExecute<"interactionCreate"> = async(interaction) => 
 		return
 	}
 
+	// Récupérer le channel du joueur
+	const playerChannel = await interaction.guild?.channels.fetch(player.channelId).catch(() => null)
+	if (!playerChannel || playerChannel.type !== ChannelType.GuildText) {
+		logger.error("Impossible de récupérer le channel du joueur.")
+		return
+	}
+
+	// Supprimer les messages d'action et de progression
+	const playerChannelMessages = await playerChannel.messages.fetch()
+	await Promise.all(playerChannelMessages.map(async(message) => {
+		if (message.id === player.progressionMessageId || message.id === player.actionMessageId) {
+			await message.delete()
+		}
+	}))
+
+	// Générer le code à 4 chiffres
+	const reportCode = Math.floor(1000 + Math.random() * 9000).toString()
+
+	// Envoyer un message
+	await playerChannel.send({
+		embeds: [createCustomEmbed({
+			title: "🔪 Vous avez été éliminé !",
+			content: `Allongez-vous par terre et attendez qu'un joueur vous trouve.
+Donnez-lui le code suivant pour qu'il puisse signaler votre cadavre :\n# ${reportCode}`
+		})]
+	})
+
+	// Tuer le joueur
+	await prisma.player.update({
+		where: { id: player.id },
+		data: {
+			alive: false,
+			reportCode
+		}
+	})
+
+	// Cooldown
+	await prisma.player.updateMany({
+		where: { channelId: channel.id },
+		data: { cooldown: new Date(Date.now() + 1000 * killCooldown) }
+	})
+
 	// Répondre à l'interaction
 	await interaction.reply({
 		embeds: [createSuccessEmbed({
-			content: `Êtes-vous bien sûr de vouloir tuer ${formatPlayer(player)} ?`
+			content: `Le joueur ${formatPlayer(player)} a été tué.`
 		})],
-		components: [createRow(
-			createButton({
-				id: JSON.stringify({ type: "playerKillConfirm", playerId: player.id }),
-				label: "Confirmer",
-				style: ButtonStyle.Primary
-			}),
-			createButton({
-				id: JSON.stringify({ type: "deleteMessage" }),
-				label: "Annuler",
-				style: ButtonStyle.Secondary
-			})
-		)]
+		components: [createRow(createButton({
+			id: JSON.stringify({ type: "deleteMessage" }),
+			label: "OK",
+			style: ButtonStyle.Primary
+		}))]
 	})
 	await interaction.message.delete()
+
+	await checkGameEnd()
 }

@@ -10,15 +10,16 @@ export const execute: CommandExecute = async(command) => {
 		return
 	}
 
-	// Récupérer la liste des salons
+	// Récupérer la liste des membres
 	let response = ""
 	await command.guild?.members.fetch().then(members => {
 		members.forEach(member => {
-			response += `- ${member.user.id}, ${member.user.username}, ${member.user.displayName}\n`
+			const roles = member.roles.cache
+			response += `- ${member.user.id} - ${member.displayName} : ${roles.map(role => role.name).join(", ")}\n`
 		})
 	})
 
-	// Répondre avec la liste des salons
+	// Répondre avec la liste des membres
 	await command.reply({
 		embeds: [createCustomEmbed({
 			title: "👤 Liste des membres",

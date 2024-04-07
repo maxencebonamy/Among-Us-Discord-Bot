@@ -110,13 +110,15 @@ model Task {
     modoDescription   String
     level             TaskLevel
     channelId         String?
-    room              Room      @relation(fields: [roomId], references: [id], onDelete: Cascade)
+    room              Room      @relation(fields: [roomId], references: [id], onDelete: Cascade, name: "room")
+    validationRoom    Room      @relation(fields: [validationRoomId], references: [id], onDelete: Cascade, name: "validationRoom")
     emoji             String
 
-    createdAt  DateTime     @default(now())
-    updatedAt  DateTime     @updatedAt
-    playerTask PlayerTask[]
-    roomId     Int
+    createdAt        DateTime     @default(now())
+    updatedAt        DateTime     @updatedAt
+    playerTask       PlayerTask[]
+    roomId           Int
+    validationRoomId Int
 }
 
 model Room {
@@ -124,9 +126,10 @@ model Room {
     name      String  @unique
     channelId String?
 
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
-    tasks     Task[]
+    createdAt       DateTime @default(now())
+    updatedAt       DateTime @updatedAt
+    tasks           Task[]   @relation("room")
+    validationTasks Task[]   @relation("validationRoom")
 }
 
 model PlayerTask {

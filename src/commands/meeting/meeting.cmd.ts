@@ -35,6 +35,15 @@ export const execute: CommandExecute = async(command) => {
 	const nbTasksDone = tasks.filter(task => task.done).length
 	const percentage = Math.round(nbTasksDone / nbTasks * 100)
 
+	// Redistribuer les tasks
+	const playersToDispatch = await prisma.player.findMany({
+		where: { game, alive: false, role: "CREWMATE", playerTask: { some: {} } },
+		include: { user: true, color: true }
+	})
+	for (const playerToDispatch of playersToDispatch) {
+		await dispatchTasks(playerToDispatch)
+	}
+
 	// Créer une barre de progression avec des emojis
 	const progressBar = `${"🟩".repeat(Math.round(percentage / 10)) + "⬛".repeat(10 - Math.round(percentage / 10))} **${percentage}%**`
 
@@ -86,13 +95,4 @@ export const execute: CommandExecute = async(command) => {
 			content: "Une réunion d'urgence a été déclenchée."
 		})]
 	})
-
-	// Redistribuer les tasks
-	const playersToDispatch = await prisma.player.findMany({
-		where: { game, alive: false, role: "CREWMATE", playerTask: { some: {} } },
-		include: { user: true, color: true }
-	})
-	for (const playerToDispatch of playersToDispatch) {
-		await dispatchTasks(playerToDispatch)
-	}
 }

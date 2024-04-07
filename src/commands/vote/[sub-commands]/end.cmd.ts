@@ -41,14 +41,14 @@ export const execute: CommandExecute = async(command) => {
 	const votes = await prisma.playerVote.findMany({ where: { vote } })
 
 	// Vérifier si tous les joueurs ont voté
-	if (votes.length < players.length) {
-		await command.editReply({
-			embeds: [createErrorEmbed({
-				content: "Tous les joueurs n'ont pas encore voté."
-			})]
-		})
-		return
-	}
+	// if (votes.length < players.length) {
+	// 	await command.editReply({
+	// 		embeds: [createErrorEmbed({
+	// 			content: "Tous les joueurs n'ont pas encore voté."
+	// 		})]
+	// 	})
+	// 	return
+	// }
 
 	// Mettre fin au vote
 	await prisma.vote.update({

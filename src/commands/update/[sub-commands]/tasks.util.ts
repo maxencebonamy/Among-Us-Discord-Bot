@@ -37,9 +37,9 @@ export const checkRoomChannels = async(guild: Guild, rooms: Room[]): Promise<voi
 	}))
 }
 
-export const checkTaskChannels = async(guild: Guild, tasks: (Task & { room: Room })[]): Promise<void> => {
+export const checkTaskChannels = async(guild: Guild, tasks: (Task & { validationRoom: Room })[]): Promise<void> => {
 	await Promise.all(tasks.map(async(task) => {
-		const expectedParent = task.room.channelId
+		const expectedParent = task.validationRoom.channelId
 		const expectedName = `${task.emoji}｜${task.name}`
 		const expectedPermissions: OverwriteResolvable[] = [
 			{ id: guild.id, deny: ["ViewChannel"] },

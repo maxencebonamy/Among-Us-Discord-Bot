@@ -61,7 +61,7 @@ export const execute: CommandExecute = async(command) => {
 		minValues: 1,
 		maxValues: 1,
 		options: [{
-			label: "Passer le vote",
+			label: "❌ Passer le vote",
 			value: "pass"
 		}, ...players.map(player => ({
 			label: formatPlayer(player),

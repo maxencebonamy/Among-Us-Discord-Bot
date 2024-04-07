@@ -10,6 +10,7 @@ import { PlayerRole, TaskLevel } from "@prisma/client"
 import { shuffle } from "@/utils/function/random"
 import { createRow } from "@/utils/discord/components/row"
 import { createButton } from "@/utils/discord/components/button"
+import { assignTasks } from "@/utils/game/tasks"
 
 export const execute: CommandExecute = async(command) => {
 	// Vérifier si l'utilisateur est un administrateur
@@ -60,17 +61,9 @@ export const execute: CommandExecute = async(command) => {
 		where: { gameId: game.id },
 		include: { user: true, color: true }
 	})
+	const assignedTasks = assignTasks(tasks, players, nbTasksEasy, nbTasksHard)
 	await Promise.all(players.map(async player => {
-		let tasksToAssign = []
-		// if (player.role === PlayerRole.IMPOSTOR) {
-		// eslint-disable-next-line no-constant-condition
-		if (false) {
-			tasksToAssign = [...tasks]
-		} else {
-			const tasksEasy = shuffle(tasks.filter(task => task.level === TaskLevel.EASY))
-			const tasksHard = shuffle(tasks.filter(task => task.level === TaskLevel.HARD))
-			tasksToAssign = [...tasksEasy.slice(0, nbTasksEasy), ...tasksHard.slice(0, nbTasksHard)]
-		}
+		const tasksToAssign = assignedTasks[player.id]
 
 		await Promise.all(tasksToAssign.map(async task => {
 			const channel = await command.guild?.channels.fetch(task.channelId ?? "")

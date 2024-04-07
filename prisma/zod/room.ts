@@ -12,6 +12,7 @@ export const RoomSchema = z.object({
 
 export interface CompleteRoom extends z.infer<typeof RoomSchema> {
   tasks: CompleteTask[]
+  validationTasks: CompleteTask[]
 }
 
 /**
@@ -21,4 +22,5 @@ export interface CompleteRoom extends z.infer<typeof RoomSchema> {
  */
 export const RelatedRoomSchema: z.ZodSchema<CompleteRoom> = z.lazy(() => RoomSchema.extend({
   tasks: RelatedTaskSchema.array(),
+  validationTasks: RelatedTaskSchema.array(),
 }))

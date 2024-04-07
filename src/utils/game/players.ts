@@ -21,9 +21,6 @@ export const dispatchTasks = async(deadPlayer: Player & { user: User, color: Pla
 	// Récupérer le serveur
 	const guild = await getGuild(client, "main")
 
-	// Vérifier si le joueur est imposteur
-	if (deadPlayer.role === "IMPOSTOR") return
-
 	// Récupérer toutes les tasks
 	const allTasks = await prisma.playerTask.findMany({
 		where: { player: { gameId: deadPlayer.gameId } },
@@ -32,6 +29,28 @@ export const dispatchTasks = async(deadPlayer: Player & { user: User, color: Pla
 
 	// Récupérer les tasks du joueur
 	const deadPlayerTasks = allTasks.filter(playerTask => playerTask.playerId === deadPlayer.id)
+
+	// Récupérer le channel de tasks du joueur mort
+	const deadPlayerTasksChannel = await guild.channels.fetch(deadPlayer.channelId).catch(() => null)
+	if (!deadPlayerTasksChannel || deadPlayerTasksChannel.type !== ChannelType.GuildText) {
+		logger.error("Impossible de récupérer le channel de tasks du joueur mort.")
+		return
+	}
+
+	// Vérifier si le joueur est imposteur
+	if (deadPlayer.role === "IMPOSTOR") {
+		// Modifier les messages dans les channels des joueurs
+		await Promise.all(deadPlayerTasks.map(async deadPlayerTask => {
+			const playerMessage = await deadPlayerTasksChannel.messages.fetch(deadPlayerTask.playerMessageId ?? "").catch(() => null)
+			if (playerMessage) await playerMessage.delete()
+
+			const modoChannel = await guild.channels.fetch(deadPlayerTask.task.channelId ?? "").catch(() => null)
+			if (!modoChannel || modoChannel.type !== ChannelType.GuildText) return
+			const modoMessage = await modoChannel.messages.fetch(deadPlayerTask.modoMessageId ?? "").catch(() => null)
+			if (modoMessage) await modoMessage.delete()
+		}))
+		return
+	}
 
 	// Récupérer les joueurs en vie
 	const alivePlayers = await prisma.player.findMany({
@@ -47,13 +66,6 @@ export const dispatchTasks = async(deadPlayer: Player & { user: User, color: Pla
 		}, 0)
 		return { player, score }
 	})
-
-	// Récupérer le channel de tasks du joueur mort
-	const deadPlayerTasksChannel = await guild.channels.fetch(deadPlayer.channelId).catch(() => null)
-	if (!deadPlayerTasksChannel || deadPlayerTasksChannel.type !== ChannelType.GuildText) {
-		logger.error("Impossible de récupérer le channel de tasks du joueur mort.")
-		return
-	}
 
 	for (const deadPlayerTask of deadPlayerTasks) {
 		// Trier les scores par ordre croissant

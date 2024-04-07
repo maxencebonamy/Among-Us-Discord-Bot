@@ -1,8 +1,7 @@
 import { client } from "@/client"
 import { getGuild, guilds } from "@/configs/guild"
 import { prisma, prismaConnected } from "@/lib/db"
-import { createEmbed } from "@/utils/discord/components/embed"
-import { getColor } from "@/utils/game/colors"
+import { createCustomEmbed } from "@/utils/discord/components/embed"
 import { formatPlayer } from "@/utils/game/players"
 import type { TaskExecute, TaskInterval } from "@/utils/handler/task"
 import { logger } from "@/utils/logger"
@@ -19,12 +18,8 @@ export const execute: TaskExecute = async() => {
 	// Récupérer le channel des vitals
 	await guild.channels.fetch()
 	const channel = guild.channels.cache.find(channel => channel.id === guilds.main.channels.vitals)
-	if (!channel) {
+	if (!channel || channel.type !== ChannelType.GuildText) {
 		logger.error("Le channel des vitals n'existe pas.")
-		return
-	}
-	if (channel.type !== ChannelType.GuildText) {
-		logger.error("Le channel des vitals n'est pas un salon textuel.")
 		return
 	}
 
@@ -64,12 +59,20 @@ export const execute: TaskExecute = async() => {
 		return
 	}
 
+	// Créer l'embed
+	const embed = createCustomEmbed({
+		title: "📈 Vitals",
+		content: `${players.map(
+			player => `# ${player.alive ? "✅" : "💀"} ${formatPlayer(player)} est ${player.alive ? "en vie" : "mort(e)"}.`
+		).join("\n")}`
+	})
+
 	// Créer les embeds
-	const embeds = players.map(player => createEmbed({
-		color: (player.color.hex as `#${string}`) ?? getColor("Noir")?.hex,
-		title: `${player.alive ? "✅" : "💀"} ${formatPlayer(player)} est ${player.alive ? "en vie" : "mort(e)"}.`,
-		content: " "
-	}))
+	// const embeds = players.map(player => createEmbed({
+	// 	color: (player.color.hex as `#${string}`) ?? getColor("Noir")?.hex,
+	// 	title: `${player.alive ? "✅" : "💀"} ${formatPlayer(player)}`,
+	// 	content: `${formatPlayer(player)} est ${player.alive ? "en vie" : "mort(e)"}.`
+	// }))
 
 	// Message
 	const messages = await channel.messages.fetch()
@@ -81,8 +84,8 @@ export const execute: TaskExecute = async() => {
 				await message.delete().catch(() => null)
 			})
 		)
-		await lastMessage.edit({ embeds })
+		await lastMessage.edit({ embeds: [embed] })
 		return
 	}
-	await channel.send({ embeds })
+	await channel.send({ embeds: [embed] })
 }

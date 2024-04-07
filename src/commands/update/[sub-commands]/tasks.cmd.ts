@@ -27,8 +27,8 @@ export const execute: CommandExecute = async(command) => {
 	await guild.channels.fetch()
 
 	// Récupérer les salles et les tasks
-	let tasks = await prisma.task.findMany({ include: { room: true } })
-	const rooms = await prisma.room.findMany({ where: { tasks: { some: {} } } })
+	let tasks = await prisma.task.findMany({ include: { validationRoom: true } })
+	const rooms = await prisma.room.findMany({ where: { validationTasks: { some: {} } } })
 
 	// Récupérer les channels de tasks
 	const categories = Object.values(guilds.main.channels)
@@ -58,7 +58,7 @@ export const execute: CommandExecute = async(command) => {
 	// Pour chaque salle et chaque task, vérifier si les channels existent
 	await checkRoomChannels(guild, rooms).then(
 		async() => {
-			tasks = await prisma.task.findMany({ include: { room: true } })
+			tasks = await prisma.task.findMany({ include: { validationRoom: true } })
 			await checkTaskChannels(guild, tasks)
 		}
 	)

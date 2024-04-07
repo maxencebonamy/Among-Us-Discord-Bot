@@ -115,7 +115,7 @@ export const execute: CommandExecute = async(command) => {
 		const progressionMessage = await playerChannel.send({
 			embeds: [createCustomEmbed({
 				title: "📈 Progression de la partie",
-				content: `0/${allPlayerTasks.length} tasks réalisées\n⬛⬛⬛⬛⬛⬛⬛⬛⬛⬛ **0%**`
+				content: "0 tasks réalisées\n⬛⬛⬛⬛⬛⬛⬛⬛⬛⬛ **0%**"
 			})]
 		})
 		await prisma.player.update({
